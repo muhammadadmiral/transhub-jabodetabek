@@ -1,21 +1,25 @@
+import { Brand } from "../components/Brand";
+import { RouteSearch } from "../features/route-search/components/RouteSearch";
 import { MapCanvas } from "../features/transit-map/components/MapCanvas";
-import { SearchPanel } from "../features/route-search/components/SearchPanel";
-import { useSearchStore } from "../store/searchStore";
+import { MapActionButtons } from "../features/transit-map/components/MapActionButtons";
+import { MapControls } from "../features/transit-map/components/MapControls";
+import { MapStatus } from "../features/transit-map/components/MapStatus";
 
 export function App() {
-  const search = useSearchStore();
-
   return (
     <main className="app-shell">
       <MapCanvas />
+      <div className="map-shade" aria-hidden="true" />
+
       <header className="topbar">
-        <div className="brand-mark" aria-label="TransHub Jabodetabek">
-          <span className="brand-mark__signal">✦</span>
-          <span>Trans<span>Hub</span></span>
-        </div>
-        <button className="icon-button" type="button" aria-label="Buka pengaturan layer">☷</button>
+        <Brand />
+        <MapActionButtons />
       </header>
-      <SearchPanel search={search} />
+
+      <RouteSearch />
+      <MapControls />
+
+      <MapStatus />
     </main>
   );
 }
