@@ -1,31 +1,73 @@
-import type { SearchStore } from "../../../store/searchStore";
-import { formatSearchLabel } from "../../../lib/formatSearchLabel";
+import { Icon } from "../../../components/Icon";
 
-type SearchPanelProps = { search: SearchStore };
+export type SearchPanelProps = {
+  canSubmit: boolean;
+  destination: string;
+  isSearching: boolean;
+  origin: string;
+  onDestinationChange: (value: string) => void;
+  onOriginChange: (value: string) => void;
+  onSubmit: () => void;
+  onSwap: () => void;
+};
 
-export function SearchPanel({ search }: SearchPanelProps) {
-  const hasInput = search.origin.trim() !== "" || search.destination.trim() !== "";
-
+export function SearchPanel({
+  canSubmit,
+  destination,
+  isSearching,
+  origin,
+  onDestinationChange,
+  onOriginChange,
+  onSubmit,
+  onSwap,
+}: SearchPanelProps) {
   return (
-    <section className="search-panel" aria-label="Cari perjalanan">
-      <div className="eyebrow">Jelajah Jabodetabek</div>
-      <h1>Berangkat ke mana<br /><em>hari ini?</em></h1>
-      <p className="intro">Cari rute transportasi publik yang paling masuk akal untuk perjalananmu.</p>
-      <div className="search-fields">
-        <label className="location-field">
-          <span className="location-dot location-dot--origin" />
-          <span className="field-content"><span className="field-label">Dari mana?</span><input value={search.origin} onChange={(event) => search.setOrigin(event.target.value)} placeholder="Lokasi awal" /></span>
-        </label>
-        <div className="field-connector" />
-        <label className="location-field">
-          <span className="location-dot location-dot--destination" />
-          <span className="field-content"><span className="field-label">Ke mana?</span><input value={search.destination} onChange={(event) => search.setDestination(event.target.value)} placeholder="Tujuan perjalanan" /></span>
-        </label>
+    <section className="search-panel" aria-labelledby="search-title">
+      <div className="search-panel__header">
+        <div>
+          <span className="section-index">01</span>
+          <h1 id="search-title">Rencanakan perjalanan</h1>
+        </div>
+        <button className="time-button" type="button">
+          <Icon name="clock" size={16} />
+          Sekarang
+        </button>
       </div>
-      <button className="primary-button" type="button" onClick={search.submit} disabled={!hasInput}>
-        {formatSearchLabel(search.isSearching)} <span>→</span>
-      </button>
-      <div className="panel-footer"><span>●</span> Data jaringan terus diperbarui</div>
+
+      <form className="route-form" onSubmit={(event) => { event.preventDefault(); onSubmit(); }}>
+        <div className="route-fields">
+          <div className="route-rail" aria-hidden="true">
+            <span className="route-node route-node--origin" />
+            <span className="route-rail__line" />
+            <span className="route-node route-node--destination" />
+          </div>
+
+          <label className="location-field">
+            <span className="field-label">Dari</span>
+            <input value={origin} onChange={(event) => onOriginChange(event.target.value)} placeholder="Stasiun, halte, atau lokasi" autoComplete="off" />
+          </label>
+
+          <div className="field-divider" />
+
+          <label className="location-field">
+            <span className="field-label">Ke</span>
+            <input value={destination} onChange={(event) => onDestinationChange(event.target.value)} placeholder="Tujuan perjalanan" autoComplete="off" />
+          </label>
+
+          <button className="swap-button" type="button" onClick={onSwap} aria-label="Tukar asal dan tujuan">
+            <Icon name="swap" size={18} />
+          </button>
+        </div>
+
+        <button className="primary-button" type="submit" disabled={!canSubmit || isSearching}>
+          <span>{isSearching ? "Mencari" : "Cari rute"}</span>
+          <span className="primary-button__icon"><Icon name="arrow" size={19} /></span>
+        </button>
+      </form>
+
+      <div className="mode-list" aria-label="Moda tersedia">
+        <span>KRL</span><span>MRT</span><span>LRT</span><span>TransJakarta</span><span>Angkot</span>
+      </div>
     </section>
   );
 }

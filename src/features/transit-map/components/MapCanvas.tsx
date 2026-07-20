@@ -1,11 +1,14 @@
+import "maplibre-gl/dist/maplibre-gl.css";
+import { useTransitMap } from "../hooks/useTransitMap";
+
 export function MapCanvas() {
+  const { containerRef, hasError, isLoading } = useTransitMap();
+
   return (
-    <div className="map-canvas" role="img" aria-label="Peta jaringan transportasi Jabodetabek">
-      <div className="map-grid" />
-      <div className="map-water" />
-      <div className="route route--red" /><div className="route route--yellow" /><div className="route route--blue" /><div className="route route--green" />
-      <span className="map-label map-label--north">JAKARTA UTARA</span><span className="map-label map-label--center">JAKARTA PUSAT</span><span className="map-label map-label--south">DEPOK</span><span className="map-label map-label--east">BEKASI</span>
-      <div className="map-credit">© OpenStreetMap contributors · OpenFreeMap</div>
+    <div className="map-canvas" aria-label="Peta 3D Jabodetabek">
+      <div ref={containerRef} className="map-instance" />
+      {isLoading && <div className="map-loading"><span /> Memuat peta</div>}
+      {hasError && <div className="map-error">Peta tidak dapat dimuat</div>}
     </div>
   );
 }
