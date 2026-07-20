@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "generate-types": "openapi-typescript https://transit-engine.fastapicloud.dev/openapi.json -o src/lib/api/generated/schema.d.ts",
+    "generate-types": "node scripts/generate-types.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },

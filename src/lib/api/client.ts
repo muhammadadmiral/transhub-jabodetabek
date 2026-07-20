@@ -1,6 +1,10 @@
 import { ApiError } from "./errors";
 
-const API_BASE_URL = (import.meta.env.VITE_TRANSIT_API_URL || "https://transit-engine.fastapicloud.dev").replace(/\/$/, "");
+const API_BASE_URL = import.meta.env.VITE_TRANSIT_API_URL?.replace(/\/$/, "");
+
+if (!API_BASE_URL) {
+  throw new Error("VITE_TRANSIT_API_URL wajib diisi di environment variables");
+}
 
 export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
