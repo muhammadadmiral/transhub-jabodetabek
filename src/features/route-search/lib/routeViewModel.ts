@@ -51,6 +51,8 @@ export type RouteCardViewModel = {
     mode: string;
     fareProductId: string | null;
     routeId: string;
+    routeCode: string;
+    routeName: string;
     serviceCategory: string;
     serviceName: string;
     to: string;
@@ -72,7 +74,9 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
 
   return uniqueOptions.map((option) => {
     const serviceNames = option.segments
-      .map((segment) => segment.serviceName)
+      .map((segment) => segment.mode === "walk"
+        ? "Jalan kaki"
+        : `${segment.routeCode} · ${segment.routeName}`)
       .filter((value, index, list) => list.indexOf(value) === index);
 
     return {
@@ -108,6 +112,8 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
         lastVerifiedAt: readableDate(segment.lastVerifiedAt),
         mode: readableValue(segment.mode),
         routeId: segment.routeId,
+        routeCode: segment.routeCode,
+        routeName: segment.routeName,
         serviceCategory: readableValue(segment.serviceCategory),
         serviceName: segment.serviceName,
         to: readableStopId(segment.toStopId),

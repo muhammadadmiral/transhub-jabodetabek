@@ -4,7 +4,7 @@ import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { useMapStore } from "../../../store/mapStore";
 import { hasSearchActivity, SearchPanel, SearchPanelContent, type SearchPanelProps } from "./SearchPanel";
 
-const SNAP_POINTS = [0.4, 0.94];
+const SNAP_POINTS = [0.34, 0.58, 0.92];
 
 export function SearchSheet(props: SearchPanelProps) {
   const isMobile = useMediaQuery("(max-width: 760px)");
@@ -13,6 +13,7 @@ export function SearchSheet(props: SearchPanelProps) {
   const hasActivity = hasSearchActivity(props);
 
   useEffect(() => {
+    // Saat hasil rute muncul, buka setengah — jangan penuh agar peta tetap terlihat.
     if (hasActivity) setSnapPoint(SNAP_POINTS[1]);
   }, [hasActivity]);
 

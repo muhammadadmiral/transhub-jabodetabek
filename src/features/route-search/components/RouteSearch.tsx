@@ -10,7 +10,7 @@ export function RouteSearch() {
 
   useEffect(() => {
     journey.clearJourney();
-  }, [form.originField.resolvedStop?.id, form.destinationField.resolvedStop?.id]);
+  }, [form.originKey, form.destinationKey]);
 
   function handleSubmit() {
     const input = form.createSearchInput();
@@ -23,6 +23,7 @@ export function RouteSearch() {
       canSubmit={form.canSubmit}
       destinationField={form.destinationField}
       isSearching={journey.routeQuery.isFetching}
+      onHoverCriteria={journey.setHoveredCriteria}
       onSelectCriteria={journey.selectCriteria}
       onSubmit={handleSubmit}
       onSwap={form.onSwap}

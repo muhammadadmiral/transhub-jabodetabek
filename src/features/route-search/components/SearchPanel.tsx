@@ -9,6 +9,7 @@ export type SearchPanelProps = {
   canSubmit: boolean;
   destinationField: LocationAutocompleteModel;
   isSearching: boolean;
+  onHoverCriteria?: (criteria: string | null) => void;
   onSelectCriteria: (criteria: string) => void;
   onSubmit: () => void;
   onSwap: () => void;
@@ -79,6 +80,7 @@ export function SearchPanelContent(props: SearchPanelProps) {
         hasResponse={Boolean(props.routeData)}
         error={props.routeError}
         isLoading={props.isSearching}
+        onHoverCriteria={props.onHoverCriteria}
         onSelectCriteria={props.onSelectCriteria}
         selectedCriteria={props.selectedCriteria}
       />
@@ -94,8 +96,8 @@ export function SearchPanel(props: SearchPanelProps) {
       className={`search-panel${hasResults ? " has-results" : ""}`}
       aria-labelledby="search-title"
       layout
-      initial={{ opacity: 0, rotateY: -8, scale: 0.96, x: -24 }}
-      animate={{ opacity: 1, rotateY: 0, scale: 1, x: 0 }}
+      initial={{ opacity: 0, rotateY: -8, scale: 0.96, x: -24, y: "-50%" }}
+      animate={{ opacity: 1, rotateY: 0, scale: 1, x: 0, y: "-50%" }}
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], layout: { duration: 0.42 } }}
     >
       <span className="panel-depth panel-depth--one" aria-hidden="true" />

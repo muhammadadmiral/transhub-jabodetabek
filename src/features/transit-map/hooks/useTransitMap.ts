@@ -5,6 +5,15 @@ import { MAP_CONFIG, MAP_STYLE_URL } from "../lib/mapConfig";
 import { useMapStore } from "../../../store/mapStore";
 import { useSearchStore, type LocationKind, type LocationSelection } from "../../../store/searchStore";
 import { useJourney } from "../../route-search/JourneyContext";
+import { reverseGeocode } from "../../../lib/api/geocode";
+
+function placeMapPin(kind: LocationKind, coordinate: { lat: number; lng: number }) {
+  const store = useSearchStore.getState();
+  store.setPin(kind, coordinate, "Titik di peta", "map");
+  void reverseGeocode(coordinate.lat, coordinate.lng)
+    .then((place) => useSearchStore.getState().updatePinLabel(kind, coordinate, place.label))
+    .catch(() => undefined);
+}
 
 function refineThreeDimensionalLayer(map: Map) {
   if (!map.getLayer("building-3d")) return;
@@ -87,18 +96,25 @@ function getGeoJsonBounds(featureCollection: GeoJSON.FeatureCollection) {
   return bounds;
 }
 
+const CRITERIA_COLORS: Record<string, string> = { cheapest: "#8bd9bf", fastest: "#e9cc75" };
+const CRITERIA_LABELS: Record<string, string> = { cheapest: "Termurah", fastest: "Tercepat" };
+
 function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
   if (!map.getSource("active-journey")) {
-    map.addSource("active-journey", { data, type: "geojson" });
+    map.addSource("active-journey", { data, promoteId: "featureId", type: "geojson" });
     map.addLayer({
       id: "active-journey-casing",
       source: "active-journey",
       type: "line",
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-color": "rgba(4, 10, 16, 0.88)",
-        "line-opacity": 0.95,
-        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 5, 15, 11],
+        "line-color": ["match", ["get", "criteria"], "fastest", "rgba(233,204,117,.38)", "rgba(139,217,191,.38)"],
+        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.95, 0.45],
+        "line-width": [
+          "interpolate", ["linear"], ["zoom"],
+          9, ["case", ["boolean", ["feature-state", "hover"], false], 8, 6],
+          15, ["case", ["boolean", ["feature-state", "hover"], false], 15, 12],
+        ],
       },
     });
     map.addLayer({
@@ -109,7 +125,12 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
         "line-color": ["coalesce", ["get", "color"], "#e9cc75"],
-        "line-opacity": 1,
+        "line-opacity": [
+          "case",
+          ["boolean", ["get", "isSelected"], false], 1,
+          ["boolean", ["feature-state", "hover"], false], 0.95,
+          0.38,
+        ],
         "line-width": ["interpolate", ["linear"], ["zoom"], 9, 2.5, 15, 6],
       },
     });
@@ -122,11 +143,43 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       paint: {
         "line-color": ["coalesce", ["get", "color"], "#94a3b8"],
         "line-dasharray": [1.2, 1.5],
-        "line-opacity": 0.9,
+        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.9, 0.3],
         "line-width": ["interpolate", ["linear"], ["zoom"], 9, 2, 15, 4],
       },
     });
   }
+}
+
+type JourneyOptionLike = {
+  criteria: string;
+  geojson: unknown;
+  totalDurationMin: number;
+  totalFare: number;
+};
+
+function buildJourneyCollection(options: JourneyOptionLike[], selectedCriteria: string | null): GeoJSON.FeatureCollection {
+  const features: GeoJSON.Feature[] = [];
+  // Rute terpilih digambar terakhir agar berada di atas.
+  const ordered = [...options].sort((a, b) =>
+    Number(a.criteria === selectedCriteria) - Number(b.criteria === selectedCriteria));
+  ordered.forEach((option) => {
+    const collection = option.geojson as GeoJSON.FeatureCollection;
+    collection.features.forEach((feature, index) => {
+      features.push({
+        ...feature,
+        properties: {
+          ...feature.properties,
+          criteria: option.criteria,
+          criteriaLabel: CRITERIA_LABELS[option.criteria] ?? option.criteria,
+          featureId: `${option.criteria}-${index}`,
+          isSelected: option.criteria === selectedCriteria,
+          totalDurationMin: Math.round(option.totalDurationMin),
+          totalFare: option.totalFare,
+        },
+      });
+    });
+  });
+  return { features, type: "FeatureCollection" };
 }
 
 function getAccessConnectors(origin: LocationSelection, destination: LocationSelection): GeoJSON.FeatureCollection {
@@ -177,7 +230,11 @@ export function useTransitMap() {
   const originSelection = useSearchStore((state) => state.originSelection);
   const destinationSelection = useSearchStore((state) => state.destinationSelection);
   const pinMode = useMapStore((state) => state.pinMode);
-  const { selectedOption } = useJourney();
+  const journey = useJourney();
+  const { options, selectedCriteria } = journey;
+  const journeyRef = useRef(journey);
+  journeyRef.current = journey;
+  const interactionsBoundRef = useRef(false);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -211,7 +268,7 @@ export function useTransitMap() {
     map.on("click", (event) => {
       const activeMode = useMapStore.getState().pinMode;
       if (!activeMode || window.matchMedia("(max-width: 760px)").matches) return;
-      useSearchStore.getState().setPin(activeMode, { lat: event.lngLat.lat, lng: event.lngLat.lng });
+      placeMapPin(activeMode, { lat: event.lngLat.lat, lng: event.lngLat.lng });
       useMapStore.getState().cancelPinPlacement();
     });
     map.on("error", (event) => {
@@ -226,6 +283,7 @@ export function useTransitMap() {
       Object.values(markersRef.current).forEach((marker) => marker?.remove());
       markersRef.current = {};
       useMapStore.getState().registerMap(null);
+      interactionsBoundRef.current = false;
       map.remove();
       mapRef.current = null;
     };
@@ -256,11 +314,7 @@ export function useTransitMap() {
       if (!currentMarker) {
         marker.on("dragend", () => {
           const position = marker.getLngLat();
-          const current = kind === "origin"
-            ? useSearchStore.getState().originSelection
-            : useSearchStore.getState().destinationSelection;
-          const label = current.kind === "pin" ? current.label : "Titik di peta";
-          useSearchStore.getState().setPin(kind, { lat: position.lat, lng: position.lng }, label);
+          placeMapPin(kind, { lat: position.lat, lng: position.lng });
         });
       }
       markersRef.current[kind] = marker;
@@ -283,14 +337,15 @@ export function useTransitMap() {
     if (!map || isLoading || !map.isStyleLoaded()) return;
     const empty: GeoJSON.FeatureCollection = { features: [], type: "FeatureCollection" };
     ensureRouteLayers(map, empty);
+    bindJourneyInteractions(map);
     const source = map.getSource("active-journey") as GeoJSONSource;
 
-    if (!selectedOption) {
+    if (options.length === 0) {
       source.setData(empty);
       return;
     }
 
-    const data = selectedOption.geojson as unknown as GeoJSON.FeatureCollection;
+    const data = buildJourneyCollection(options, selectedCriteria);
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let animation: gsap.core.Tween | undefined;
     if (prefersReducedMotion || data.features.length < 2) {
@@ -314,7 +369,7 @@ export function useTransitMap() {
         duration: prefersReducedMotion ? 0 : 850,
         maxZoom: 15.5,
         padding: window.innerWidth <= 760
-          ? { bottom: 360, left: 36, right: 36, top: 110 }
+          ? { bottom: Math.round(window.innerHeight * 0.42), left: 36, right: 36, top: 100 }
           : { bottom: 80, left: 500, right: 80, top: 90 },
         pitch: 38,
       });
@@ -322,14 +377,89 @@ export function useTransitMap() {
     return () => {
       animation?.kill();
     };
-  }, [isLoading, selectedOption]);
+  }, [isLoading, options, selectedCriteria]);
+
+  // Hover kartu rute / legenda ikut menonjolkan garis di peta.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || isLoading || !map.getLayer("active-journey-line")) return;
+    const hovered = journey.hoveredCriteria;
+    map.setPaintProperty("active-journey-line", "line-opacity", [
+      "case",
+      ...(hovered ? [["==", ["get", "criteria"], hovered], 1] as const : []),
+      ["boolean", ["get", "isSelected"], false], 1,
+      ["boolean", ["feature-state", "hover"], false], 0.95,
+      hovered ? 0.22 : 0.38,
+    ]);
+  }, [isLoading, journey.hoveredCriteria]);
+
+  function bindJourneyInteractions(map: Map) {
+    if (interactionsBoundRef.current) return;
+    interactionsBoundRef.current = true;
+
+    const popup = new maplibregl.Popup({
+      className: "journey-popup",
+      closeButton: false,
+      closeOnClick: false,
+      maxWidth: "260px",
+      offset: 14,
+    });
+    let hoveredFeatureId: string | number | null = null;
+
+    const clearHover = () => {
+      if (hoveredFeatureId !== null) {
+        map.setFeatureState({ id: hoveredFeatureId, source: "active-journey" }, { hover: false });
+        hoveredFeatureId = null;
+      }
+      journeyRef.current.setHoveredCriteria(null);
+      popup.remove();
+      map.getCanvas().style.cursor = "";
+    };
+
+    const rupiah = new Intl.NumberFormat("id-ID", { currency: "IDR", maximumFractionDigits: 0, style: "currency" });
+
+    map.on("mousemove", "active-journey-casing", (event) => {
+      const feature = event.features?.[0];
+      if (!feature) return;
+      const props = feature.properties as Record<string, string | number | boolean>;
+      if (hoveredFeatureId !== null && hoveredFeatureId !== feature.id) {
+        map.setFeatureState({ id: hoveredFeatureId, source: "active-journey" }, { hover: false });
+      }
+      hoveredFeatureId = feature.id ?? null;
+      if (hoveredFeatureId !== null) {
+        map.setFeatureState({ id: hoveredFeatureId, source: "active-journey" }, { hover: true });
+      }
+      journeyRef.current.setHoveredCriteria(String(props.criteria));
+      map.getCanvas().style.cursor = "pointer";
+
+      const accent = CRITERIA_COLORS[String(props.criteria)] ?? "#e9cc75";
+      const isWalk = props.mode === "walk";
+      popup
+        .setLngLat(event.lngLat)
+        .setHTML(`
+          <div class="journey-popup__inner" style="--accent:${accent}">
+            <span class="journey-popup__badge">${props.criteriaLabel} · ${props.totalDurationMin} mnt · ${rupiah.format(Number(props.totalFare))}</span>
+            <strong>${isWalk ? "Jalan kaki" : props.serviceName ?? props.mode}</strong>
+            <small>${String(props.mode).replaceAll("_", " ")} · ±${Math.round(Number(props.avgDurationMin))} menit</small>
+          </div>
+        `)
+        .addTo(map);
+    });
+    map.on("mouseleave", "active-journey-casing", clearHover);
+    map.on("click", "active-journey-casing", (event) => {
+      const feature = event.features?.[0];
+      if (!feature) return;
+      const criteria = String((feature.properties as Record<string, unknown>).criteria);
+      journeyRef.current.selectCriteria(criteria);
+    });
+  }
 
   function confirmCenterPin() {
     const map = mapRef.current;
     const activeMode = useMapStore.getState().pinMode;
     if (!map || !activeMode) return;
     const center = map.getCenter();
-    useSearchStore.getState().setPin(activeMode, { lat: center.lat, lng: center.lng });
+    placeMapPin(activeMode, { lat: center.lat, lng: center.lng });
     useMapStore.getState().cancelPinPlacement();
   }
 

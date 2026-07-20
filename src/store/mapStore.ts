@@ -2,6 +2,7 @@ import type { Map } from "maplibre-gl";
 import { toast } from "sonner";
 import { create } from "zustand";
 import { useSearchStore, type LocationKind } from "./searchStore";
+import { reverseGeocode } from "../lib/api/geocode";
 
 type MapStore = {
   isThreeDimensional: boolean;
@@ -26,12 +27,16 @@ function requestDeviceLocation(kind: LocationKind, map: Map | null) {
   const pending = toast.loading("Mencari lokasi kamu…");
   navigator.geolocation.getCurrentPosition(({ coords }) => {
     toast.success("Lokasi ditemukan", { id: pending, duration: 1800 });
+    const coordinate = { lat: coords.latitude, lng: coords.longitude };
     useSearchStore.getState().setPin(
       kind,
-      { lat: coords.latitude, lng: coords.longitude },
+      coordinate,
       "Lokasi saya",
       "device",
     );
+    void reverseGeocode(coordinate.lat, coordinate.lng)
+      .then((place) => useSearchStore.getState().updatePinLabel(kind, coordinate, place.label))
+      .catch(() => undefined);
     map?.flyTo({ center: [coords.longitude, coords.latitude], zoom: 15.5, pitch: 48, duration: 1100 });
   }, (error) => {
     toast.error(

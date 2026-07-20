@@ -39,3 +39,13 @@ export async function searchPlaces(query: string, signal?: AbortSignal) {
     };
   });
 }
+
+export async function reverseGeocode(lat: number, lng: number, signal?: AbortSignal) {
+  const search = new URLSearchParams({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
+  const response = await fetch(`/api/geocode?${search}`, {
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!response.ok) throw new Error("Alamat titik tidak dapat ditemukan");
+  return response.json() as Promise<PlaceResult>;
+}

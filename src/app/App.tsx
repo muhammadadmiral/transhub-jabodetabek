@@ -5,6 +5,7 @@ import { Brand } from "../components/Brand";
 import { RouteSearch } from "../features/route-search/components/RouteSearch";
 import { MapActionButtons } from "../features/transit-map/components/MapActionButtons";
 import { MapControls } from "../features/transit-map/components/MapControls";
+import { MapLegend } from "../features/transit-map/components/MapLegend";
 import { MapStatus } from "../features/transit-map/components/MapStatus";
 import { JourneyProvider } from "../features/route-search/JourneyContext";
 import { useMapStore } from "../store/mapStore";
@@ -41,6 +42,7 @@ export function App() {
 
       <RouteSearch />
       <MapControls />
+      <MapLegend />
 
       <MapStatus />
     </main>

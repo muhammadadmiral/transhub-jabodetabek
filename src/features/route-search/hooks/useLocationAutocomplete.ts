@@ -18,6 +18,13 @@ type UseLocationAutocompleteOptions = {
   selection: LocationSelection;
 };
 
+export type AutocompleteOption =
+  | { kind: "place"; place: PlaceResult }
+  | { kind: "stop"; stop: TransitStop };
+
+const MAX_PLACES = 5;
+const MAX_STOPS = 4;
+
 export function useLocationAutocomplete(options: UseLocationAutocompleteOptions) {
   const inputId = useId();
   const listboxId = `${inputId}-listbox`;
@@ -25,10 +32,16 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
   const [isOpen, setIsOpen] = useState(false);
   const stopQuery = useStopSearch(options.query);
   const placeQuery = usePlaceSearch(options.query);
-  const stops = stopQuery.data ?? [];
-  const places = placeQuery.data ?? [];
+  const stops = (stopQuery.data ?? []).slice(0, MAX_STOPS);
+  const places = (placeQuery.data ?? []).slice(0, MAX_PLACES);
 
-  useEffect(() => setActiveIndex(-1), [stopQuery.data]);
+  // Prioritas: lokasi/tempat (maps) dulu, baru halte & stasiun.
+  const flatOptions: AutocompleteOption[] = [
+    ...places.map((place) => ({ kind: "place", place }) as const),
+    ...stops.map((stop) => ({ kind: "stop", stop }) as const),
+  ];
+
+  useEffect(() => setActiveIndex(-1), [stopQuery.data, placeQuery.data]);
 
   function selectStop(stop: TransitStop) {
     options.onStopSelect(stop);
@@ -39,6 +52,12 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
   function selectPlace(place: PlaceResult) {
     options.onPlaceSelect(place);
     setIsOpen(false);
+    setActiveIndex(-1);
+  }
+
+  function selectOption(option: AutocompleteOption) {
+    if (option.kind === "place") selectPlace(option.place);
+    else selectStop(option.stop);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -50,12 +69,12 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
       event.preventDefault();
       setIsOpen(true);
       const direction = event.key === "ArrowDown" ? 1 : -1;
-      setActiveIndex((current) => stops.length === 0 ? -1 : (current + direction + stops.length) % stops.length);
+      setActiveIndex((current) => flatOptions.length === 0 ? -1 : (current + direction + flatOptions.length) % flatOptions.length);
       return;
     }
-    if (event.key === "Enter" && isOpen && activeIndex >= 0) {
+    if (event.key === "Enter" && isOpen && activeIndex >= 0 && flatOptions[activeIndex]) {
       event.preventDefault();
-      selectStop(stops[activeIndex]);
+      selectOption(flatOptions[activeIndex]);
       return;
     }
   }
@@ -69,6 +88,7 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
   return {
     activeIndex,
     activeOptionId: activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined,
+    flatOptions,
     inputId,
     isLoadingPlaces: placeQuery.isFetching,
     isLoadingStops: stopQuery.isFetching,

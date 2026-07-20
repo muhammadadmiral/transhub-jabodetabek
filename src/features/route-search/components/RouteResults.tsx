@@ -11,11 +11,17 @@ type RouteResultsProps = {
   error: Error | null;
   hasResponse: boolean;
   isLoading: boolean;
+  onHoverCriteria?: (criteria: string | null) => void;
   onSelectCriteria: (criteria: string) => void;
   selectedCriteria: string | null;
 };
 
-export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCriteria, selectedCriteria }: RouteResultsProps) {
+const CRITERIA_LINE: Record<string, { className: string; label: string }> = {
+  cheapest: { className: "route-card__line-chip--mint", label: "garis hijau di peta" },
+  fastest: { className: "route-card__line-chip--gold", label: "garis emas di peta" },
+};
+
+export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCriteria, onSelectCriteria, selectedCriteria }: RouteResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -46,9 +52,15 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCri
               animate={{ opacity: 1, y: 0, rotateX: 0 }}
               transition={{ delay: index * 0.08, duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => onSelectCriteria(card.criteria)}
+              onMouseEnter={() => onHoverCriteria?.(card.criteria)}
+              onMouseLeave={() => onHoverCriteria?.(null)}
             >
               <div className="route-card__meta">
                 <span>{card.criteriaLabel}</span>
+                <span className={cn("route-card__line-chip", CRITERIA_LINE[card.criteria]?.className)}>
+                  <span aria-hidden="true" />
+                  {CRITERIA_LINE[card.criteria]?.label}
+                </span>
                 <small>{card.transferLabel}</small>
               </div>
               <div className="route-card__figures">
@@ -89,12 +101,14 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCri
                           <div className="segment-row" key={segment.id}>
                             <span className="segment-line" style={{ backgroundColor: segment.color }} />
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-2"><strong>{segment.serviceName}</strong><small>{segment.duration}</small></div>
+                              <div className="flex items-center justify-between gap-2">
+                                <strong>{segment.mode === "walk" ? "Jalan kaki" : `${segment.routeCode} · ${segment.routeName}`}</strong>
+                                <small>{segment.duration}</small>
+                              </div>
                               <p>{segment.from} → {segment.to}</p>
                               <div className="segment-meta">
                                 <span>{segment.mode}</span><span>{segment.serviceCategory}</span><span>{segment.fare}</span>
-                                <span>{segment.confidence}</span><span>{segment.lastVerifiedAt}</span><span>{segment.routeId}</span>
-                                {segment.fareProductId && <span>{segment.fareProductId}</span>}
+                                <span>{segment.confidence}</span><span>{segment.lastVerifiedAt}</span>
                               </div>
                             </div>
                           </div>
