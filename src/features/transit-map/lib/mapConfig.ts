@@ -1,6 +1,10 @@
 import type { MapOptions } from "maplibre-gl";
 
-export const MAP_STYLE_URL = import.meta.env.VITE_MAP_STYLE_URL || "https://tiles.openfreemap.org/styles/liberty";
+export const MAP_STYLE_URL = import.meta.env.VITE_MAP_STYLE_URL;
+
+if (!MAP_STYLE_URL) {
+  throw new Error("VITE_MAP_STYLE_URL wajib diisi di environment variables");
+}
 
 export const MAP_CONFIG = {
   center: [106.8456, -6.2088],

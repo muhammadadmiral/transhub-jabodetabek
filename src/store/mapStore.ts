@@ -1,9 +1,15 @@
 import type { Map } from "maplibre-gl";
 import { create } from "zustand";
+import { useSearchStore, type LocationKind } from "./searchStore";
 
 type MapStore = {
   isThreeDimensional: boolean;
   map: Map | null;
+  pinMode: LocationKind | null;
+  beginPinPlacement: (kind: LocationKind) => void;
+  cancelPinPlacement: () => void;
+  focusCoordinate: (lng: number, lat: number) => void;
+  locateFor: (kind: LocationKind) => void;
   locateUser: () => void;
   registerMap: (map: Map | null) => void;
   toggleThreeDimensional: () => void;
@@ -11,15 +17,28 @@ type MapStore = {
   zoomOut: () => void;
 };
 
+function requestDeviceLocation(kind: LocationKind, map: Map | null) {
+  if (!("geolocation" in navigator)) return;
+  navigator.geolocation.getCurrentPosition(({ coords }) => {
+    useSearchStore.getState().setPin(
+      kind,
+      { lat: coords.latitude, lng: coords.longitude },
+      "Lokasi saya",
+      "device",
+    );
+    map?.flyTo({ center: [coords.longitude, coords.latitude], zoom: 15.5, pitch: 48, duration: 1100 });
+  }, undefined, { enableHighAccuracy: true, maximumAge: 60_000, timeout: 10_000 });
+}
+
 export const useMapStore = create<MapStore>((set, get) => ({
   isThreeDimensional: true,
   map: null,
-  locateUser: () => {
-    if (!("geolocation" in navigator)) return;
-    navigator.geolocation.getCurrentPosition(({ coords }) => {
-      get().map?.flyTo({ center: [coords.longitude, coords.latitude], zoom: 15.5, duration: 1400 });
-    });
-  },
+  pinMode: null,
+  beginPinPlacement: (kind) => set({ pinMode: kind }),
+  cancelPinPlacement: () => set({ pinMode: null }),
+  focusCoordinate: (lng, lat) => get().map?.flyTo({ center: [lng, lat], zoom: 15.5, pitch: 50, duration: 900 }),
+  locateFor: (kind) => requestDeviceLocation(kind, get().map),
+  locateUser: () => requestDeviceLocation("origin", get().map),
   registerMap: (map) => set({ map }),
   toggleThreeDimensional: () => {
     const isThreeDimensional = !get().isThreeDimensional;

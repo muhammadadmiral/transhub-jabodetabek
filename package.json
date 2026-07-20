@@ -8,13 +8,20 @@
     "build": "tsc -b && vite build",
     "generate-types": "node scripts/generate-types.mjs",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.83.0",
+    "clsx": "^2.1.1",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.25.0",
     "maplibre-gl": "^5.6.2",
+    "motion": "^12.42.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.3",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
