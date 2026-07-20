@@ -19,8 +19,75 @@ export type SearchPanelProps = {
   selectedCriteria: string | null;
 };
 
+export function hasSearchActivity(props: SearchPanelProps) {
+  return Boolean(props.routeData || props.routeError || props.isSearching);
+}
+
+export function SearchPanelContent(props: SearchPanelProps) {
+  const hasResults = hasSearchActivity(props);
+
+  return (
+    <div className="search-panel__content">
+      <div className="search-panel__header">
+        <div>
+          <span className="section-index">Perjalanan</span>
+          <h1 id="search-title">Pilih asal dan tujuan</h1>
+        </div>
+        <button className="time-button" type="button">
+          <Clock3 size={15} />
+          Sekarang
+        </button>
+      </div>
+
+      <form className="route-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(); }}>
+        <div className="route-fields">
+          <div className="route-rail" aria-hidden="true">
+            <span className="route-node route-node--origin" />
+            <span className="route-rail__line" />
+            <span className="route-node route-node--destination" />
+          </div>
+
+          <LocationField field={props.originField} label="Dari" placeholder="Alamat, tempat, halte" />
+          <div className="field-divider" />
+          <LocationField field={props.destinationField} label="Ke" placeholder="Alamat, tempat, halte" />
+
+          <button className="swap-button" type="button" onClick={props.onSwap} aria-label="Tukar asal dan tujuan">
+            <ArrowUpDown size={16} />
+          </button>
+        </div>
+
+        <motion.button
+          className="primary-button"
+          type="submit"
+          disabled={!props.canSubmit || props.isSearching}
+          whileHover={props.canSubmit ? { y: -2, scale: 1.005 } : undefined}
+          whileTap={props.canSubmit ? { scale: 0.985 } : undefined}
+        >
+          <span>{props.isSearching ? "Menyusun rute" : "Cari rute"}</span>
+          <span className="primary-button__icon"><Search size={17} /></span>
+        </motion.button>
+      </form>
+
+      {!hasResults && (
+        <div className="mode-list" aria-label="Moda tersedia">
+          <span>KRL</span><span>MRT</span><span>LRT</span><span>TransJakarta</span><span>Angkot</span>
+        </div>
+      )}
+
+      <RouteResults
+        cards={props.routeCards}
+        hasResponse={Boolean(props.routeData)}
+        error={props.routeError}
+        isLoading={props.isSearching}
+        onSelectCriteria={props.onSelectCriteria}
+        selectedCriteria={props.selectedCriteria}
+      />
+    </div>
+  );
+}
+
 export function SearchPanel(props: SearchPanelProps) {
-  const hasResults = Boolean(props.routeData || props.routeError || props.isSearching);
+  const hasResults = hasSearchActivity(props);
 
   return (
     <motion.section
@@ -33,63 +100,7 @@ export function SearchPanel(props: SearchPanelProps) {
     >
       <span className="panel-depth panel-depth--one" aria-hidden="true" />
       <span className="panel-depth panel-depth--two" aria-hidden="true" />
-
-      <div className="search-panel__content">
-        <div className="search-panel__header">
-          <div>
-            <span className="section-index">Perjalanan</span>
-            <h1 id="search-title">Pilih asal dan tujuan</h1>
-          </div>
-          <button className="time-button" type="button">
-            <Clock3 size={15} />
-            Sekarang
-          </button>
-        </div>
-
-        <form className="route-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(); }}>
-          <div className="route-fields">
-            <div className="route-rail" aria-hidden="true">
-              <span className="route-node route-node--origin" />
-              <span className="route-rail__line" />
-              <span className="route-node route-node--destination" />
-            </div>
-
-            <LocationField field={props.originField} label="Dari" placeholder="Alamat, tempat, halte" />
-            <div className="field-divider" />
-            <LocationField field={props.destinationField} label="Ke" placeholder="Alamat, tempat, halte" />
-
-            <button className="swap-button" type="button" onClick={props.onSwap} aria-label="Tukar asal dan tujuan">
-              <ArrowUpDown size={16} />
-            </button>
-          </div>
-
-          <motion.button
-            className="primary-button"
-            type="submit"
-            disabled={!props.canSubmit || props.isSearching}
-            whileHover={props.canSubmit ? { y: -2, scale: 1.005 } : undefined}
-            whileTap={props.canSubmit ? { scale: 0.985 } : undefined}
-          >
-            <span>{props.isSearching ? "Menyusun rute" : "Cari rute"}</span>
-            <span className="primary-button__icon"><Search size={17} /></span>
-          </motion.button>
-        </form>
-
-        {!hasResults && (
-          <div className="mode-list" aria-label="Moda tersedia">
-            <span>KRL</span><span>MRT</span><span>LRT</span><span>TransJakarta</span><span>Angkot</span>
-          </div>
-        )}
-
-        <RouteResults
-          cards={props.routeCards}
-          hasResponse={Boolean(props.routeData)}
-          error={props.routeError}
-          isLoading={props.isSearching}
-          onSelectCriteria={props.onSelectCriteria}
-          selectedCriteria={props.selectedCriteria}
-        />
-      </div>
+      <SearchPanelContent {...props} />
     </motion.section>
   );
 }

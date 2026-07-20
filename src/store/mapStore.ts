@@ -1,4 +1,5 @@
 import type { Map } from "maplibre-gl";
+import { toast } from "sonner";
 import { create } from "zustand";
 import { useSearchStore, type LocationKind } from "./searchStore";
 
@@ -18,8 +19,13 @@ type MapStore = {
 };
 
 function requestDeviceLocation(kind: LocationKind, map: Map | null) {
-  if (!("geolocation" in navigator)) return;
+  if (!("geolocation" in navigator)) {
+    toast.error("Perangkat tidak mendukung geolokasi");
+    return;
+  }
+  const pending = toast.loading("Mencari lokasi kamu…");
   navigator.geolocation.getCurrentPosition(({ coords }) => {
+    toast.success("Lokasi ditemukan", { id: pending, duration: 1800 });
     useSearchStore.getState().setPin(
       kind,
       { lat: coords.latitude, lng: coords.longitude },
@@ -27,7 +33,14 @@ function requestDeviceLocation(kind: LocationKind, map: Map | null) {
       "device",
     );
     map?.flyTo({ center: [coords.longitude, coords.latitude], zoom: 15.5, pitch: 48, duration: 1100 });
-  }, undefined, { enableHighAccuracy: true, maximumAge: 60_000, timeout: 10_000 });
+  }, (error) => {
+    toast.error(
+      error.code === error.PERMISSION_DENIED
+        ? "Izin lokasi ditolak — aktifkan di pengaturan browser"
+        : "Lokasi tidak dapat ditemukan, coba lagi",
+      { id: pending },
+    );
+  }, { enableHighAccuracy: true, maximumAge: 60_000, timeout: 10_000 });
 }
 
 export const useMapStore = create<MapStore>((set, get) => ({

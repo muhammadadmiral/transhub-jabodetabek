@@ -23,9 +23,8 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
   const listboxId = `${inputId}-listbox`;
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
-  const [placeSearchQuery, setPlaceSearchQuery] = useState<string | null>(null);
   const stopQuery = useStopSearch(options.query);
-  const placeQuery = usePlaceSearch(placeSearchQuery);
+  const placeQuery = usePlaceSearch(options.query);
   const stops = stopQuery.data ?? [];
   const places = placeQuery.data ?? [];
 
@@ -35,13 +34,11 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
     options.onStopSelect(stop);
     setIsOpen(false);
     setActiveIndex(-1);
-    setPlaceSearchQuery(null);
   }
 
   function selectPlace(place: PlaceResult) {
     options.onPlaceSelect(place);
     setIsOpen(false);
-    setPlaceSearchQuery(null);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -60,11 +57,6 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
       event.preventDefault();
       selectStop(stops[activeIndex]);
       return;
-    }
-    if (event.key === "Enter" && options.query.trim().length >= 3) {
-      event.preventDefault();
-      setPlaceSearchQuery(options.query);
-      setIsOpen(true);
     }
   }
 
@@ -85,7 +77,6 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
     nearbyStops: options.nearbyStops,
     onChange(value: string) {
       options.onQueryChange(value);
-      setPlaceSearchQuery(null);
       setIsOpen(true);
     },
     onClose: () => setIsOpen(false),
@@ -96,7 +87,6 @@ export function useLocationAutocomplete(options: UseLocationAutocompleteOptions)
     onPlaceSelect: selectPlace,
     onRetryPlaces: () => placeQuery.refetch(),
     onRetryStops: () => stopQuery.refetch(),
-    onSearchPlaces: () => setPlaceSearchQuery(options.query),
     onStopSelect: selectStop,
     onUseDevice: options.onUseDevice,
     placeError: placeQuery.isError,

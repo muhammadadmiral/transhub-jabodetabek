@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import NumberFlow from "@number-flow/react";
 import { ChevronDown, Clock3, Database, ExternalLink, ShieldCheck, Users, WalletCards } from "lucide-react";
 import { ApiError } from "../../../lib/api/errors";
 import { cn } from "../../../lib/cn";
@@ -51,7 +52,7 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCri
                 <small>{card.transferLabel}</small>
               </div>
               <div className="route-card__figures">
-                <strong>{card.durationLabel} <small>menit</small></strong>
+                <strong><NumberFlow value={card.durationMin} /> <small>menit</small></strong>
                 <strong>{card.fareLabel}</strong>
               </div>
               <div className="route-card__modes">{card.modesLabel}</div>

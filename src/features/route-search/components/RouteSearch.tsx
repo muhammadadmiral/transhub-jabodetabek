@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useJourney } from "../JourneyContext";
 import { useRouteSearchForm } from "../hooks/useRouteSearchForm";
 import { createRouteCards } from "../lib/routeViewModel";
-import { SearchPanel } from "./SearchPanel";
+import { SearchSheet } from "./SearchSheet";
 
 export function RouteSearch() {
   const form = useRouteSearchForm();
@@ -19,7 +19,7 @@ export function RouteSearch() {
   }
 
   return (
-    <SearchPanel
+    <SearchSheet
       canSubmit={form.canSubmit}
       destinationField={form.destinationField}
       isSearching={journey.routeQuery.isFetching}

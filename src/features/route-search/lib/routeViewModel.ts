@@ -25,6 +25,7 @@ export type RouteCardViewModel = {
   criteria: "fastest" | "cheapest";
   criteriaLabel: string;
   durationLabel: string;
+  durationMin: number;
   fareComponents: Array<{
     amount: string;
     id: string;
@@ -79,6 +80,7 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
       criteria: option.criteria,
       criteriaLabel: isCombined ? "Tercepat & termurah" : option.criteria === "fastest" ? "Tercepat" : "Termurah",
       durationLabel: String(Math.round(option.totalDurationMin)),
+      durationMin: Math.round(option.totalDurationMin),
       fareComponents: option.fareQuote.components.map((component) => ({
         amount: component.status === "range"
           ? `${rupiah.format(component.minAmount)}–${rupiah.format(component.maxAmount).replace("Rp", "")}`

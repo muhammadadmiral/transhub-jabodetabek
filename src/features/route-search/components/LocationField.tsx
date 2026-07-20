@@ -131,9 +131,6 @@ export function LocationField({ field, label, placeholder }: LocationFieldProps)
             ))}
 
             <div className="grid grid-cols-1 gap-1 px-1 pt-1 sm:grid-cols-2">
-              <button className="location-action" type="button" onMouseDown={(event) => event.preventDefault()} onClick={field.onSearchPlaces} disabled={field.query.trim().length < 3}>
-                <Search size={14} /> Cari di peta
-              </button>
               <button className="location-action" type="button" onMouseDown={(event) => event.preventDefault()} onClick={field.onPickOnMap}>
                 <Navigation size={14} /> Pilih titik
               </button>

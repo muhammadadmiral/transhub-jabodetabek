@@ -8,15 +8,53 @@ import { useJourney } from "../../route-search/JourneyContext";
 
 function refineThreeDimensionalLayer(map: Map) {
   if (!map.getLayer("building-3d")) return;
-  map.setLayerZoomRange("building-3d", 15, 24);
+  map.setLayerZoomRange("building-3d", 14.2, 24);
   map.setPaintProperty("building-3d", "fill-extrusion-color", [
     "interpolate", ["linear"], ["get", "render_height"],
-    0, "#172433",
-    45, "#394b59",
-    120, "#9a8b70",
+    0, "#16222f",
+    24, "#243746",
+    60, "#3d5162",
+    120, "#8a7c60",
+    220, "#c8ad72",
   ]);
-  map.setPaintProperty("building-3d", "fill-extrusion-opacity", 0.76);
+  map.setPaintProperty("building-3d", "fill-extrusion-opacity", [
+    "interpolate", ["linear"], ["zoom"],
+    14.2, 0,
+    15.2, 0.62,
+    16.5, 0.86,
+  ]);
   map.setPaintProperty("building-3d", "fill-extrusion-vertical-gradient", true);
+  map.setLight({ anchor: "viewport", color: "#f4e9c8", intensity: 0.32, position: [1.2, 210, 32] });
+}
+
+function applyAtmosphere(map: Map) {
+  try {
+    map.setSky({
+      "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 9, 0.35, 13, 0.12, 15, 0],
+      "fog-color": "#0a141f",
+      "fog-ground-blend": 0.82,
+      "horizon-color": "#1c2c3d",
+      "horizon-fog-blend": 0.6,
+      "sky-color": "#050b12",
+      "sky-horizon-blend": 0.7,
+    });
+  } catch {
+    // Style belum mendukung properti sky — abaikan.
+  }
+}
+
+function playIntroFlight(map: Map) {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReducedMotion) return;
+  const isMobile = window.matchMedia("(max-width: 760px)").matches;
+  const target = {
+    bearing: MAP_CONFIG.bearing,
+    center: MAP_CONFIG.center as [number, number],
+    pitch: isMobile ? 52 : MAP_CONFIG.pitch,
+    zoom: isMobile ? 13.1 : MAP_CONFIG.zoom,
+  };
+  map.jumpTo({ ...target, bearing: target.bearing + 36, pitch: 0, zoom: target.zoom - 1.9 });
+  map.easeTo({ ...target, duration: 2600, easing: (t) => 1 - Math.pow(1 - t, 3) });
 }
 
 function getSelectionCoordinate(selection: LocationSelection) {
@@ -164,7 +202,9 @@ export function useTransitMap() {
     map.once("load", () => {
       window.clearTimeout(loadTimeout);
       refineThreeDimensionalLayer(map);
+      applyAtmosphere(map);
       map.resize();
+      playIntroFlight(map);
       setIsLoading(false);
       setHasError(false);
     });
