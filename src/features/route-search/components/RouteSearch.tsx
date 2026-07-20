@@ -1,42 +1,36 @@
-import { useEffect, useState } from "react";
-import type { RouteSearchInput } from "../../../lib/api/routes";
+import { useEffect } from "react";
+import { useJourney } from "../JourneyContext";
 import { useRouteSearchForm } from "../hooks/useRouteSearchForm";
-import { useRouteSearch } from "../hooks/useRouteSearch";
 import { createRouteCards } from "../lib/routeViewModel";
 import { SearchPanel } from "./SearchPanel";
 
 export function RouteSearch() {
   const form = useRouteSearchForm();
-  const [searchInput, setSearchInput] = useState<RouteSearchInput | null>(null);
-  const routeQuery = useRouteSearch(searchInput);
+  const journey = useJourney();
 
   useEffect(() => {
-    setSearchInput(null);
-  }, [form.originField.selectedStop?.id, form.destinationField.selectedStop?.id]);
+    journey.clearJourney();
+  }, [form.originField.resolvedStop?.id, form.destinationField.resolvedStop?.id]);
 
   function handleSubmit() {
     const input = form.createSearchInput();
     if (!input) return;
-
-    const isSameRequest = JSON.stringify(input) === JSON.stringify(searchInput);
-    if (isSameRequest && routeQuery.isError) {
-      routeQuery.refetch();
-      return;
-    }
-    setSearchInput(input);
+    journey.search(input);
   }
 
   return (
     <SearchPanel
       canSubmit={form.canSubmit}
       destinationField={form.destinationField}
-      isSearching={routeQuery.isFetching}
+      isSearching={journey.routeQuery.isFetching}
+      onSelectCriteria={journey.selectCriteria}
       onSubmit={handleSubmit}
       onSwap={form.onSwap}
       originField={form.originField}
-      routeData={routeQuery.data}
-      routeCards={createRouteCards(routeQuery.data)}
-      routeError={routeQuery.error}
+      routeCards={createRouteCards(journey.routeQuery.data)}
+      routeData={journey.routeQuery.data}
+      routeError={journey.routeQuery.error}
+      selectedCriteria={journey.selectedCriteria}
     />
   );
 }

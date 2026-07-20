@@ -1,75 +1,95 @@
+import { motion } from "motion/react";
+import { ArrowUpDown, Clock3, Search } from "lucide-react";
 import type { RouteSearchResponse } from "../../../lib/api/routes";
-import { Icon } from "../../../components/Icon";
-import { LocationField, type StopAutocompleteModel } from "./LocationField";
+import { LocationField, type LocationAutocompleteModel } from "./LocationField";
 import { RouteResults } from "./RouteResults";
 import type { RouteCardViewModel } from "../lib/routeViewModel";
 
 export type SearchPanelProps = {
   canSubmit: boolean;
-  destinationField: StopAutocompleteModel;
+  destinationField: LocationAutocompleteModel;
   isSearching: boolean;
+  onSelectCriteria: (criteria: string) => void;
   onSubmit: () => void;
   onSwap: () => void;
-  originField: StopAutocompleteModel;
-  routeData?: RouteSearchResponse;
+  originField: LocationAutocompleteModel;
   routeCards: RouteCardViewModel[];
+  routeData?: RouteSearchResponse;
   routeError: Error | null;
+  selectedCriteria: string | null;
 };
 
-export function SearchPanel({
-  canSubmit,
-  destinationField,
-  isSearching,
-  onSubmit,
-  onSwap,
-  originField,
-  routeData,
-  routeCards,
-  routeError,
-}: SearchPanelProps) {
+export function SearchPanel(props: SearchPanelProps) {
+  const hasResults = Boolean(props.routeData || props.routeError || props.isSearching);
+
   return (
-    <section className={`search-panel${routeData || routeError || isSearching ? " has-results" : ""}`} aria-labelledby="search-title">
-      <div className="search-panel__header">
-        <div>
-          <span className="section-index">01</span>
-          <h1 id="search-title">Rencanakan perjalanan</h1>
-        </div>
-        <button className="time-button" type="button">
-          <Icon name="clock" size={16} />
-          Sekarang
-        </button>
-      </div>
+    <motion.section
+      className={`search-panel${hasResults ? " has-results" : ""}`}
+      aria-labelledby="search-title"
+      layout
+      initial={{ opacity: 0, rotateY: -8, scale: 0.96, x: -24 }}
+      animate={{ opacity: 1, rotateY: 0, scale: 1, x: 0 }}
+      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], layout: { duration: 0.42 } }}
+    >
+      <span className="panel-depth panel-depth--one" aria-hidden="true" />
+      <span className="panel-depth panel-depth--two" aria-hidden="true" />
 
-      <form className="route-form" onSubmit={(event) => { event.preventDefault(); onSubmit(); }}>
-        <div className="route-fields">
-          <div className="route-rail" aria-hidden="true">
-            <span className="route-node route-node--origin" />
-            <span className="route-rail__line" />
-            <span className="route-node route-node--destination" />
+      <div className="search-panel__content">
+        <div className="search-panel__header">
+          <div>
+            <span className="section-index">Perjalanan</span>
+            <h1 id="search-title">Pilih asal dan tujuan</h1>
           </div>
-
-          <LocationField field={originField} label="Dari" placeholder="Cari halte atau stasiun" />
-          <div className="field-divider" />
-          <LocationField field={destinationField} label="Ke" placeholder="Cari halte atau stasiun" />
-
-          <button className="swap-button" type="button" onClick={onSwap} aria-label="Tukar asal dan tujuan">
-            <Icon name="swap" size={18} />
+          <button className="time-button" type="button">
+            <Clock3 size={15} />
+            Sekarang
           </button>
         </div>
 
-        <button className="primary-button" type="submit" disabled={!canSubmit || isSearching}>
-          <span>{isSearching ? "Mencari rute" : "Cari rute"}</span>
-          <span className="primary-button__icon"><Icon name="arrow" size={19} /></span>
-        </button>
-      </form>
+        <form className="route-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(); }}>
+          <div className="route-fields">
+            <div className="route-rail" aria-hidden="true">
+              <span className="route-node route-node--origin" />
+              <span className="route-rail__line" />
+              <span className="route-node route-node--destination" />
+            </div>
 
-      {!routeData && !routeError && !isSearching && (
-        <div className="mode-list" aria-label="Moda tersedia">
-          <span>KRL</span><span>MRT</span><span>LRT</span><span>TransJakarta</span><span>Angkot</span>
-        </div>
-      )}
+            <LocationField field={props.originField} label="Dari" placeholder="Alamat, tempat, halte" />
+            <div className="field-divider" />
+            <LocationField field={props.destinationField} label="Ke" placeholder="Alamat, tempat, halte" />
 
-      <RouteResults cards={routeCards} hasResponse={Boolean(routeData)} error={routeError} isLoading={isSearching} />
-    </section>
+            <button className="swap-button" type="button" onClick={props.onSwap} aria-label="Tukar asal dan tujuan">
+              <ArrowUpDown size={16} />
+            </button>
+          </div>
+
+          <motion.button
+            className="primary-button"
+            type="submit"
+            disabled={!props.canSubmit || props.isSearching}
+            whileHover={props.canSubmit ? { y: -2, scale: 1.005 } : undefined}
+            whileTap={props.canSubmit ? { scale: 0.985 } : undefined}
+          >
+            <span>{props.isSearching ? "Menyusun rute" : "Cari rute"}</span>
+            <span className="primary-button__icon"><Search size={17} /></span>
+          </motion.button>
+        </form>
+
+        {!hasResults && (
+          <div className="mode-list" aria-label="Moda tersedia">
+            <span>KRL</span><span>MRT</span><span>LRT</span><span>TransJakarta</span><span>Angkot</span>
+          </div>
+        )}
+
+        <RouteResults
+          cards={props.routeCards}
+          hasResponse={Boolean(props.routeData)}
+          error={props.routeError}
+          isLoading={props.isSearching}
+          onSelectCriteria={props.onSelectCriteria}
+          selectedCriteria={props.selectedCriteria}
+        />
+      </div>
+    </motion.section>
   );
 }
