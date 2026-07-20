@@ -1,7 +1,7 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useTransitMap } from "../hooks/useTransitMap";
 
-export function MapCanvas() {
+export default function MapCanvas() {
   const { containerRef, hasError, isLoading } = useTransitMap();
 
   return (

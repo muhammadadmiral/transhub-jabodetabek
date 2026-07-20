@@ -1,24 +1,37 @@
 import { create } from "zustand";
+import type { TransitStop } from "../lib/api/stops";
 
 export type SearchStore = {
-  origin: string;
   destination: string;
-  isSearching: boolean;
-  setOrigin: (origin: string) => void;
+  destinationStop: TransitStop | null;
+  origin: string;
+  originStop: TransitStop | null;
+  selectDestination: (stop: TransitStop) => void;
+  selectOrigin: (stop: TransitStop) => void;
   setDestination: (destination: string) => void;
+  setOrigin: (origin: string) => void;
   swapLocations: () => void;
-  submit: () => void;
 };
 
 export const useSearchStore = create<SearchStore>((set) => ({
-  origin: "",
   destination: "",
-  isSearching: false,
-  setOrigin: (origin) => set({ origin }),
-  setDestination: (destination) => set({ destination }),
-  swapLocations: () => set((state) => ({ origin: state.destination, destination: state.origin })),
-  submit: () => {
-    set({ isSearching: true });
-    window.setTimeout(() => set({ isSearching: false }), 700);
-  },
+  destinationStop: null,
+  origin: "",
+  originStop: null,
+  selectDestination: (stop) => set({ destination: stop.name, destinationStop: stop }),
+  selectOrigin: (stop) => set({ origin: stop.name, originStop: stop }),
+  setDestination: (destination) => set((state) => ({
+    destination,
+    destinationStop: destination === state.destinationStop?.name ? state.destinationStop : null,
+  })),
+  setOrigin: (origin) => set((state) => ({
+    origin,
+    originStop: origin === state.originStop?.name ? state.originStop : null,
+  })),
+  swapLocations: () => set((state) => ({
+    destination: state.origin,
+    destinationStop: state.originStop,
+    origin: state.destination,
+    originStop: state.destinationStop,
+  })),
 }));

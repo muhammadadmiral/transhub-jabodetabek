@@ -1,28 +1,34 @@
+import type { RouteSearchResponse } from "../../../lib/api/routes";
 import { Icon } from "../../../components/Icon";
+import { LocationField, type StopAutocompleteModel } from "./LocationField";
+import { RouteResults } from "./RouteResults";
+import type { RouteCardViewModel } from "../lib/routeViewModel";
 
 export type SearchPanelProps = {
   canSubmit: boolean;
-  destination: string;
+  destinationField: StopAutocompleteModel;
   isSearching: boolean;
-  origin: string;
-  onDestinationChange: (value: string) => void;
-  onOriginChange: (value: string) => void;
   onSubmit: () => void;
   onSwap: () => void;
+  originField: StopAutocompleteModel;
+  routeData?: RouteSearchResponse;
+  routeCards: RouteCardViewModel[];
+  routeError: Error | null;
 };
 
 export function SearchPanel({
   canSubmit,
-  destination,
+  destinationField,
   isSearching,
-  origin,
-  onDestinationChange,
-  onOriginChange,
   onSubmit,
   onSwap,
+  originField,
+  routeData,
+  routeCards,
+  routeError,
 }: SearchPanelProps) {
   return (
-    <section className="search-panel" aria-labelledby="search-title">
+    <section className={`search-panel${routeData || routeError || isSearching ? " has-results" : ""}`} aria-labelledby="search-title">
       <div className="search-panel__header">
         <div>
           <span className="section-index">01</span>
@@ -42,17 +48,9 @@ export function SearchPanel({
             <span className="route-node route-node--destination" />
           </div>
 
-          <label className="location-field">
-            <span className="field-label">Dari</span>
-            <input value={origin} onChange={(event) => onOriginChange(event.target.value)} placeholder="Stasiun, halte, atau lokasi" autoComplete="off" />
-          </label>
-
+          <LocationField field={originField} label="Dari" placeholder="Cari halte atau stasiun" />
           <div className="field-divider" />
-
-          <label className="location-field">
-            <span className="field-label">Ke</span>
-            <input value={destination} onChange={(event) => onDestinationChange(event.target.value)} placeholder="Tujuan perjalanan" autoComplete="off" />
-          </label>
+          <LocationField field={destinationField} label="Ke" placeholder="Cari halte atau stasiun" />
 
           <button className="swap-button" type="button" onClick={onSwap} aria-label="Tukar asal dan tujuan">
             <Icon name="swap" size={18} />
@@ -60,14 +58,18 @@ export function SearchPanel({
         </div>
 
         <button className="primary-button" type="submit" disabled={!canSubmit || isSearching}>
-          <span>{isSearching ? "Mencari" : "Cari rute"}</span>
+          <span>{isSearching ? "Mencari rute" : "Cari rute"}</span>
           <span className="primary-button__icon"><Icon name="arrow" size={19} /></span>
         </button>
       </form>
 
-      <div className="mode-list" aria-label="Moda tersedia">
-        <span>KRL</span><span>MRT</span><span>LRT</span><span>TransJakarta</span><span>Angkot</span>
-      </div>
+      {!routeData && !routeError && !isSearching && (
+        <div className="mode-list" aria-label="Moda tersedia">
+          <span>KRL</span><span>MRT</span><span>LRT</span><span>TransJakarta</span><span>Angkot</span>
+        </div>
+      )}
+
+      <RouteResults cards={routeCards} hasResponse={Boolean(routeData)} error={routeError} isLoading={isSearching} />
     </section>
   );
 }
