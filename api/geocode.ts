@@ -34,6 +34,8 @@ export default {
     upstreamUrl.searchParams.set("limit", "6");
     upstreamUrl.searchParams.set("countrycodes", "id");
     upstreamUrl.searchParams.set("viewbox", "106.35,-5.85,107.35,-6.85");
+    upstreamUrl.searchParams.set("bounded", "1");
+    upstreamUrl.searchParams.set("accept-language", "id");
 
     const response = await fetch(upstreamUrl, {
       headers: { Accept: "application/json", "User-Agent": userAgent },
