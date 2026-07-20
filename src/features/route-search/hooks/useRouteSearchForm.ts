@@ -72,6 +72,7 @@ export function useRouteSearchForm() {
   function createSearchInput(): RouteSearchInput | null {
     if (!canSubmit) return null;
     return {
+      accessRadiusMeters: 1500,
       ...(destinationSelection.kind === "pin"
         ? {
             destinationLat: destinationSelection.coordinate.lat,

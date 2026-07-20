@@ -29,9 +29,12 @@ export default {
 
     const requestUrl = new URL(request.url);
     const query = requestUrl.searchParams.get("q")?.trim() || "";
-    const lat = Number(requestUrl.searchParams.get("lat"));
-    const lng = Number(requestUrl.searchParams.get("lng"));
-    const isReverse = Number.isFinite(lat) && Number.isFinite(lng);
+    const latParam = requestUrl.searchParams.get("lat");
+    const lngParam = requestUrl.searchParams.get("lng");
+    const lat = Number(latParam);
+    const lng = Number(lngParam);
+    const isReverse = latParam !== null && lngParam !== null
+      && Number.isFinite(lat) && Number.isFinite(lng);
     const baseUrl = process.env.GEOCODER_BASE_URL?.replace(/\/$/, "");
     const userAgent = process.env.GEOCODER_USER_AGENT;
 
@@ -69,6 +72,9 @@ export default {
     }
 
     const payload = await response.json() as NominatimResult | NominatimResult[];
+    if (isReverse && !(payload as NominatimResult).display_name) {
+      return Response.json({ error: "Alamat titik tidak ditemukan" }, { status: 404 });
+    }
     const body = isReverse
       ? toPlaceResult(payload as NominatimResult)
       : (payload as NominatimResult[]).map(toPlaceResult);
