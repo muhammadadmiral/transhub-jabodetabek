@@ -364,7 +364,7 @@ button { cursor: pointer; }
   .map-status { right: 14px; bottom: auto; top: calc(env(safe-area-inset-top) + 76px); }
   .map-instance .maplibregl-ctrl-bottom-left { display: none; }
   .map-loading, .map-error { top: 30%; left: 50%; width: max-content; }
-  .is-pinning .search-sheet { opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .search-sheet.is-hidden { opacity: 0; pointer-events: none; transition: opacity .25s; }
   .pin-placement__bar { bottom: calc(18px + env(safe-area-inset-bottom)); min-width: calc(100vw - 28px); }
   .pin-placement__bar span { max-width: 130px; text-align: center; }
 }
