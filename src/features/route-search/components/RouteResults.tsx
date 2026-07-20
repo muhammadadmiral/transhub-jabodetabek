@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, Clock3, Database, ShieldCheck, Users, WalletCards } from "lucide-react";
+import { ChevronDown, Clock3, Database, ExternalLink, ShieldCheck, Users, WalletCards } from "lucide-react";
 import { ApiError } from "../../../lib/api/errors";
 import { cn } from "../../../lib/cn";
 import type { RouteCardViewModel } from "../lib/routeViewModel";
@@ -92,7 +92,8 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCri
                               <p>{segment.from} → {segment.to}</p>
                               <div className="segment-meta">
                                 <span>{segment.mode}</span><span>{segment.serviceCategory}</span><span>{segment.fare}</span>
-                                <span>{segment.confidence}</span><span>{segment.lastVerifiedAt}</span>
+                                <span>{segment.confidence}</span><span>{segment.lastVerifiedAt}</span><span>{segment.routeId}</span>
+                                {segment.fareProductId && <span>{segment.fareProductId}</span>}
                               </div>
                             </div>
                           </div>
@@ -102,11 +103,21 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCri
 
                     {card.fareComponents.length > 0 && (
                       <div className="detail-section">
-                        <div className="detail-title"><WalletCards size={13} /> Rincian tarif</div>
+                        <div className="detail-title"><WalletCards size={13} /> Rincian tarif <small>{card.quoteMeta}</small></div>
                         {card.fareComponents.map((component) => (
                           <div className="fare-component" key={component.id}>
-                            <span><strong>{component.serviceName}</strong><small>{component.model} · {component.status}</small></span>
-                            <strong>{component.amount}</strong>
+                            <span>
+                              <strong>{component.serviceName}</strong>
+                              <small>{component.model} · {component.status} · {component.id}</small>
+                            </span>
+                            <span className="flex shrink-0 items-center gap-2">
+                              <strong>{component.amount}</strong>
+                              {component.sourceUrl && (
+                                <a href={component.sourceUrl} target="_blank" rel="noreferrer" aria-label={`Sumber tarif ${component.serviceName}`}>
+                                  <ExternalLink size={11} />
+                                </a>
+                              )}
+                            </span>
                           </div>
                         ))}
                       </div>

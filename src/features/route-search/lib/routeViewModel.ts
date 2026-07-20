@@ -11,6 +11,15 @@ function readableStopId(id: string) {
   return id.split(":").at(-1)?.replaceAll("-", " ") || id;
 }
 
+const readableValue = (value: string) => value.replaceAll("_", " ");
+
+function readableDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date);
+}
+
 export type RouteCardViewModel = {
   assumptions: string[];
   criteria: "fastest" | "cheapest";
@@ -21,6 +30,7 @@ export type RouteCardViewModel = {
     id: string;
     model: string;
     serviceName: string;
+    sourceUrl: string | null;
     status: string;
   }>;
   fareLabel: string;
@@ -28,6 +38,7 @@ export type RouteCardViewModel = {
   hasCommunityData: boolean;
   id: string;
   modesLabel: string;
+  quoteMeta: string;
   segments: Array<{
     color: string;
     confidence: string;
@@ -37,6 +48,7 @@ export type RouteCardViewModel = {
     id: string;
     lastVerifiedAt: string;
     mode: string;
+    fareProductId: string | null;
     routeId: string;
     serviceCategory: string;
     serviceName: string;
@@ -72,26 +84,29 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
           ? `${rupiah.format(component.minAmount)}–${rupiah.format(component.maxAmount).replace("Rp", "")}`
           : rupiah.format(component.estimatedAmount),
         id: component.fareProductId,
-        model: component.model,
+        model: readableValue(component.model),
         serviceName: component.serviceName,
-        status: component.status,
+        sourceUrl: component.sourceUrl ?? null,
+        status: readableValue(component.status),
       })),
       fareLabel: formatFareQuote(option.fareQuote),
-      fareStatus: option.fareQuote.status,
+      fareStatus: readableValue(option.fareQuote.status),
       hasCommunityData: option.segments.some((segment) => segment.dataConfidence === "community"),
       id: `${option.criteria}-${option.segments.map((segment) => segment.id).join("-")}`,
       modesLabel: serviceNames.join(" → "),
+      quoteMeta: `${readableValue(option.fareQuote.paymentProfile)} · ${option.fareQuote.currency}`,
       segments: option.segments.map((segment) => ({
         color: `#${segment.color.replace(/^#/, "")}`,
-        confidence: segment.dataConfidence,
+        confidence: readableValue(segment.dataConfidence),
         duration: `${Math.round(segment.avgDurationMin)} menit`,
         fare: rupiah.format(segment.fare),
         from: readableStopId(segment.fromStopId),
         id: segment.id,
-        lastVerifiedAt: segment.lastVerifiedAt,
-        mode: segment.mode,
+        fareProductId: segment.fareProductId ?? null,
+        lastVerifiedAt: readableDate(segment.lastVerifiedAt),
+        mode: readableValue(segment.mode),
         routeId: segment.routeId,
-        serviceCategory: segment.serviceCategory,
+        serviceCategory: readableValue(segment.serviceCategory),
         serviceName: segment.serviceName,
         to: readableStopId(segment.toStopId),
       })),

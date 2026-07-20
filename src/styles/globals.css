@@ -257,6 +257,7 @@ button { cursor: pointer; }
 .route-detail { overflow: hidden; }
 .detail-section { margin-top: 14px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.08); }
 .detail-title { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: rgba(255,255,255,.52); font: 500 8px "DM Mono", monospace; letter-spacing: .1em; text-transform: uppercase; }
+.detail-title small { margin-left: auto; color: rgba(255,255,255,.3); font: inherit; letter-spacing: .04em; }
 .segment-timeline { display: grid; gap: 3px; }
 .segment-row { display: flex; gap: 10px; min-height: 57px; }
 .segment-line { width: 3px; min-height: 100%; flex: 0 0 3px; border-radius: 999px; box-shadow: 0 0 10px currentColor; }
@@ -269,6 +270,8 @@ button { cursor: pointer; }
 .fare-component > span { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .fare-component strong { font-size: 10px; font-weight: 500; }
 .fare-component small { color: rgba(255,255,255,.34); font: 500 7px ui-monospace, monospace; text-transform: uppercase; }
+.fare-component a { display: grid; width: 23px; height: 23px; place-items: center; border: 1px solid rgba(255,255,255,.09); border-radius: 6px; color: rgba(255,255,255,.42); transition: color .15s, border-color .15s; }
+.fare-component a:hover { border-color: rgba(233,204,117,.28); color: var(--gold); }
 .assumption-list { display: grid; gap: 5px; margin: 0; padding-left: 15px; color: rgba(255,255,255,.4); font-size: 9px; line-height: 1.5; }
 @keyframes spin { to { transform: rotate(360deg); } }
 

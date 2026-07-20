@@ -250,7 +250,7 @@ export function useTransitMap() {
       return;
     }
 
-    const data = selectedOption.geojson as GeoJSON.FeatureCollection;
+    const data = selectedOption.geojson as unknown as GeoJSON.FeatureCollection;
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let animation: gsap.core.Tween | undefined;
     if (prefersReducedMotion || data.features.length < 2) {
@@ -279,7 +279,9 @@ export function useTransitMap() {
         pitch: 38,
       });
     }
-    return () => animation?.kill();
+    return () => {
+      animation?.kill();
+    };
   }, [isLoading, selectedOption]);
 
   function confirmCenterPin() {
