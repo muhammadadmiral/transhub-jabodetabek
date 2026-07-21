@@ -308,6 +308,8 @@ export interface components {
         RouteOverview: {
             /** Id */
             id: string;
+            /** Code */
+            code: string;
             mode: components["schemas"]["TransportMode"];
             /** Name */
             name: string;
@@ -320,9 +322,22 @@ export interface components {
         /** RouteSearchRequest */
         RouteSearchRequest: {
             /** Originstopid */
-            originStopId: string;
+            originStopId?: string | null;
             /** Destinationstopid */
-            destinationStopId: string;
+            destinationStopId?: string | null;
+            /** Originlat */
+            originLat?: number | null;
+            /** Originlng */
+            originLng?: number | null;
+            /** Destinationlat */
+            destinationLat?: number | null;
+            /** Destinationlng */
+            destinationLng?: number | null;
+            /**
+             * Accessradiusmeters
+             * @default 1500
+             */
+            accessRadiusMeters: number;
             /**
              * Maxtransfers
              * @default 3
@@ -353,6 +368,16 @@ export interface components {
             id: string;
             /** Routeid */
             routeId: string;
+            /**
+             * Routecode
+             * @default
+             */
+            routeCode: string;
+            /**
+             * Routename
+             * @default
+             */
+            routeName: string;
             /** Fromstopid */
             fromStopId: string;
             /** Tostopid */
@@ -380,6 +405,24 @@ export interface components {
                 number,
                 number
             ][];
+            /**
+             * Fromstopname
+             * @default
+             */
+            fromStopName: string;
+            /**
+             * Tostopname
+             * @default
+             */
+            toStopName: string;
+            /** Fromstoplat */
+            fromStopLat?: number | null;
+            /** Fromstoplng */
+            fromStopLng?: number | null;
+            /** Tostoplat */
+            toStopLat?: number | null;
+            /** Tostoplng */
+            toStopLng?: number | null;
         };
         /**
          * ServiceCategory

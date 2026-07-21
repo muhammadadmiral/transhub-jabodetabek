@@ -26,6 +26,7 @@ type SearchStore = {
   selectPlace: (kind: LocationKind, place: PlaceResult) => void;
   selectStop: (kind: LocationKind, stop: TransitStop) => void;
   setPin: (kind: LocationKind, coordinate: Coordinate, label?: string, source?: "device" | "geocoder" | "map") => void;
+  updatePinLabel: (kind: LocationKind, coordinate: Coordinate, label: string) => void;
   setQuery: (kind: LocationKind, query: string) => void;
   swapLocations: () => void;
 };
@@ -77,6 +78,18 @@ export const useSearchStore = create<SearchStore>((set) => ({
     return {
       [`${kind}Query`]: query,
       [`${kind}Selection`]: query === selectedLabel ? selection : emptySelection,
+    };
+  }),
+  updatePinLabel: (kind, coordinate, label) => set((state) => {
+    const current = state[`${kind}Selection`];
+    if (
+      current.kind !== "pin"
+      || current.coordinate.lat !== coordinate.lat
+      || current.coordinate.lng !== coordinate.lng
+    ) return state;
+    return {
+      [`${kind}Query`]: label,
+      [`${kind}Selection`]: { ...current, label },
     };
   }),
   swapLocations: () => set((state) => ({

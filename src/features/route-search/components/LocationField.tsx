@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { Check, LocateFixed, MapPin, Navigation, Search, TrainFront } from "lucide-react";
+import { Check, LocateFixed, MapPin, Navigation, TrainFront } from "lucide-react";
 import type { useLocationAutocomplete } from "../hooks/useLocationAutocomplete";
 import { cn } from "../../../lib/cn";
 
@@ -23,6 +23,7 @@ const MODE_LABELS = {
 
 export function LocationField({ field, label, placeholder }: LocationFieldProps) {
   const pinSelection = field.selection.kind === "pin" ? field.selection : null;
+  const placeCount = field.places.length;
 
   return (
     <div
@@ -47,7 +48,7 @@ export function LocationField({ field, label, placeholder }: LocationFieldProps)
           aria-expanded={field.isOpen}
           aria-activedescendant={field.activeOptionId}
         />
-        {field.resolvedStop && (
+        {field.selection.kind !== "empty" && (
           <span className="grid size-5 shrink-0 place-items-center rounded-md bg-emerald-300/10 text-emerald-200" aria-label="Lokasi siap">
             <Check size={13} strokeWidth={2.2} />
           </span>
@@ -78,26 +79,61 @@ export function LocationField({ field, label, placeholder }: LocationFieldProps)
             exit={{ opacity: 0, scale: 0.98, y: -4 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
-              <span className="font-mono text-[8px] uppercase tracking-[0.18em] text-white/35">Halte & stasiun</span>
-              {field.isLoadingStops && <span className="mini-loader" />}
-            </div>
-
-            {field.stopError && (
-              <div className="stop-dropdown__state stop-dropdown__state--error">
-                <span>Pencarian gagal</span>
-                <button type="button" onClick={() => field.onRetryStops()}>Coba lagi</button>
+            <div id={field.listboxId} role="listbox" aria-label={`Pilihan ${label.toLowerCase()}`}>
+              <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
+                <span className="font-mono text-[8px] uppercase tracking-[0.18em] text-white/35">Lokasi & tempat</span>
+                {field.isLoadingPlaces && <span className="mini-loader" />}
               </div>
-            )}
-            {!field.stopError && field.stops.length > 0 && (
-              <div id={field.listboxId} role="listbox" aria-label={`Pilihan ${label.toLowerCase()}`}>
-                {field.stops.slice(0, 6).map((stop, index) => (
+
+              {field.placeError && (
+                <div className="stop-dropdown__state stop-dropdown__state--error">
+                  <span>Lokasi gagal dicari</span>
+                  <button type="button" onClick={() => field.onRetryPlaces()}>Coba lagi</button>
+                </div>
+              )}
+              {!field.placeError && !field.isLoadingPlaces && field.places.length === 0 && field.query.trim().length >= 3 && (
+                <div className="stop-dropdown__state">Tempat tidak ditemukan</div>
+              )}
+              {field.places.map((place, index) => (
+                <button
+                  id={`${field.listboxId}-${index}`}
+                  className={cn("stop-option", field.activeIndex === index && "is-active")}
+                  type="button"
+                  role="option"
+                  aria-selected={field.activeIndex === index}
+                  key={place.id}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => field.onPlaceSelect(place)}
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-white/8 bg-white/[0.035] text-cyan-200"><MapPin size={15} /></span>
+                  <span className="stop-option__content"><strong>{place.label}</strong><small>{place.area} · {place.category}</small></span>
+                </button>
+              ))}
+
+              {field.stops.length > 0 && (
+                <>
+                  <div className="my-1.5 h-px bg-white/[0.07]" />
+                  <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
+                    <span className="font-mono text-[8px] uppercase tracking-[0.18em] text-white/35">Halte & stasiun</span>
+                    {field.isLoadingStops && <span className="mini-loader" />}
+                  </div>
+                </>
+              )}
+              {field.stopError && (
+                <div className="stop-dropdown__state stop-dropdown__state--error">
+                  <span>Pencarian halte gagal</span>
+                  <button type="button" onClick={() => field.onRetryStops()}>Coba lagi</button>
+                </div>
+              )}
+              {field.stops.map((stop, index) => {
+                const optionIndex = placeCount + index;
+                return (
                   <button
-                    id={`${field.listboxId}-${index}`}
-                    className={cn("stop-option", field.activeIndex === index && "is-active")}
+                    id={`${field.listboxId}-${optionIndex}`}
+                    className={cn("stop-option", field.activeIndex === optionIndex && "is-active")}
                     type="button"
                     role="option"
-                    aria-selected={field.activeIndex === index}
+                    aria-selected={field.activeIndex === optionIndex}
                     key={stop.id}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => field.onStopSelect(stop)}
@@ -110,35 +146,16 @@ export function LocationField({ field, label, placeholder }: LocationFieldProps)
                       <small>{stop.modes.map((mode) => MODE_LABELS[mode]).join(" · ")}</small>
                     </span>
                   </button>
-                ))}
-              </div>
-            )}
-
-            <div className="my-1.5 h-px bg-white/[0.07]" />
-
-            {field.isLoadingPlaces && <div className="stop-dropdown__state"><span className="mini-loader" /> Mencari lokasi</div>}
-            {field.placeError && (
-              <div className="stop-dropdown__state stop-dropdown__state--error">
-                <span>Lokasi gagal dicari</span>
-                <button type="button" onClick={() => field.onRetryPlaces()}>Coba lagi</button>
-              </div>
-            )}
-            {!field.isLoadingPlaces && field.places.map((place) => (
-              <button className="stop-option" type="button" key={place.id} onMouseDown={(event) => event.preventDefault()} onClick={() => field.onPlaceSelect(place)}>
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-white/8 bg-white/[0.035] text-cyan-200"><MapPin size={15} /></span>
-                <span className="stop-option__content"><strong>{place.label}</strong><small>{place.area} · {place.category}</small></span>
-              </button>
-            ))}
+                );
+              })}
+            </div>
 
             <div className="grid grid-cols-1 gap-1 px-1 pt-1 sm:grid-cols-2">
-              <button className="location-action" type="button" onMouseDown={(event) => event.preventDefault()} onClick={field.onSearchPlaces} disabled={field.query.trim().length < 3}>
-                <Search size={14} /> Cari di peta
-              </button>
               <button className="location-action" type="button" onMouseDown={(event) => event.preventDefault()} onClick={field.onPickOnMap}>
                 <Navigation size={14} /> Pilih titik
               </button>
-              <button className="location-action sm:col-span-2" type="button" onMouseDown={(event) => event.preventDefault()} onClick={field.onUseDevice}>
-                <LocateFixed size={14} /> Gunakan lokasi saya
+              <button className="location-action" type="button" onMouseDown={(event) => event.preventDefault()} onClick={field.onUseDevice}>
+                <LocateFixed size={14} /> Lokasi saya
               </button>
             </div>
           </motion.div>

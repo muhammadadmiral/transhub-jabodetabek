@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import NumberFlow from "@number-flow/react";
 import { ChevronDown, Clock3, Database, ExternalLink, ShieldCheck, Users, WalletCards } from "lucide-react";
 import { ApiError } from "../../../lib/api/errors";
 import { cn } from "../../../lib/cn";
@@ -10,11 +11,17 @@ type RouteResultsProps = {
   error: Error | null;
   hasResponse: boolean;
   isLoading: boolean;
+  onHoverCriteria?: (criteria: string | null) => void;
   onSelectCriteria: (criteria: string) => void;
   selectedCriteria: string | null;
 };
 
-export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCriteria, selectedCriteria }: RouteResultsProps) {
+const CRITERIA_LINE: Record<string, { className: string; label: string }> = {
+  cheapest: { className: "route-card__line-chip--mint", label: "garis hijau di peta" },
+  fastest: { className: "route-card__line-chip--gold", label: "garis emas di peta" },
+};
+
+export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCriteria, onSelectCriteria, selectedCriteria }: RouteResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (isLoading) {
@@ -45,13 +52,19 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCri
               animate={{ opacity: 1, y: 0, rotateX: 0 }}
               transition={{ delay: index * 0.08, duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => onSelectCriteria(card.criteria)}
+              onMouseEnter={() => onHoverCriteria?.(card.criteria)}
+              onMouseLeave={() => onHoverCriteria?.(null)}
             >
               <div className="route-card__meta">
                 <span>{card.criteriaLabel}</span>
+                <span className={cn("route-card__line-chip", CRITERIA_LINE[card.criteria]?.className)}>
+                  <span aria-hidden="true" />
+                  {CRITERIA_LINE[card.criteria]?.label}
+                </span>
                 <small>{card.transferLabel}</small>
               </div>
               <div className="route-card__figures">
-                <strong>{card.durationLabel} <small>menit</small></strong>
+                <strong><NumberFlow value={card.durationMin} /> <small>menit</small></strong>
                 <strong>{card.fareLabel}</strong>
               </div>
               <div className="route-card__modes">{card.modesLabel}</div>
@@ -88,12 +101,23 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onSelectCri
                           <div className="segment-row" key={segment.id}>
                             <span className="segment-line" style={{ backgroundColor: segment.color }} />
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-2"><strong>{segment.serviceName}</strong><small>{segment.duration}</small></div>
-                              <p>{segment.from} → {segment.to}</p>
+                              <div className="flex items-center justify-between gap-2">
+                                <strong>{segment.mode === "walk" ? "Jalan kaki" : `${segment.routeCode || segment.serviceName}`}</strong>
+                                <small>{segment.duration}</small>
+                              </div>
+                              <p className="segment-stops">
+                                <span>{segment.from}</span>
+                                <span className="segment-stops__arrow" aria-hidden="true">→</span>
+                                <span>{segment.to}</span>
+                              </p>
+                              {(segment.fromCoordinate || segment.toCoordinate) && (
+                                <p className="segment-coords">
+                                  {segment.fromCoordinate ?? segment.toCoordinate}
+                                </p>
+                              )}
                               <div className="segment-meta">
                                 <span>{segment.mode}</span><span>{segment.serviceCategory}</span><span>{segment.fare}</span>
-                                <span>{segment.confidence}</span><span>{segment.lastVerifiedAt}</span><span>{segment.routeId}</span>
-                                {segment.fareProductId && <span>{segment.fareProductId}</span>}
+                                <span>{segment.confidence}</span><span>{segment.lastVerifiedAt}</span>
                               </div>
                             </div>
                           </div>

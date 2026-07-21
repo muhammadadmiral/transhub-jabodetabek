@@ -65,14 +65,27 @@ export function useRouteSearchForm() {
 
   const originStop = getResolvedStop(originSelection);
   const destinationStop = getResolvedStop(destinationSelection);
-  const canSubmit = Boolean(originStop && destinationStop && originStop.id !== destinationStop.id);
+  const canSubmit = originSelection.kind !== "empty"
+    && destinationSelection.kind !== "empty"
+    && !(originStop && destinationStop && originStop.id === destinationStop.id);
 
   function createSearchInput(): RouteSearchInput | null {
-    if (!canSubmit || !originStop || !destinationStop) return null;
+    if (!canSubmit) return null;
     return {
-      destinationStopId: destinationStop.id,
+      accessRadiusMeters: 1500,
+      ...(destinationSelection.kind === "pin"
+        ? {
+            destinationLat: destinationSelection.coordinate.lat,
+            destinationLng: destinationSelection.coordinate.lng,
+          }
+        : { destinationStopId: destinationSelection.stop.id }),
       maxTransfers: 3,
-      originStopId: originStop.id,
+      ...(originSelection.kind === "pin"
+        ? {
+            originLat: originSelection.coordinate.lat,
+            originLng: originSelection.coordinate.lng,
+          }
+        : { originStopId: originSelection.stop.id }),
       paymentProfile: "standard",
     };
   }
@@ -81,7 +94,13 @@ export function useRouteSearchForm() {
     canSubmit,
     createSearchInput,
     destinationField,
+    destinationKey: destinationSelection.kind === "pin"
+      ? `pin:${destinationSelection.coordinate.lat},${destinationSelection.coordinate.lng}`
+      : destinationSelection.kind === "transit-stop" ? destinationSelection.stop.id : "empty",
     onSwap: swapLocations,
     originField,
+    originKey: originSelection.kind === "pin"
+      ? `pin:${originSelection.coordinate.lat},${originSelection.coordinate.lng}`
+      : originSelection.kind === "transit-stop" ? originSelection.stop.id : "empty",
   };
 }
