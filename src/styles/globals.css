@@ -155,12 +155,12 @@ button { cursor: pointer; }
   position: absolute;
   z-index: 4;
   top: 50%;
-  left: clamp(22px, 5.4vw, 82px);
+  left: clamp(20px, 4.4vw, 64px);
   display: flex;
   flex-direction: column;
-  width: min(422px, calc(100vw - 44px));
-  max-height: min(calc(100vh - 128px), calc(100dvh - 128px));
-  padding: 27px;
+  width: min(492px, calc(100vw - 36px));
+  max-height: min(calc(100vh - 112px), calc(100dvh - 112px));
+  padding: 26px;
   border: 1px solid rgba(255,255,255,.13);
   border-radius: 24px;
   background: linear-gradient(145deg, rgba(13,26,38,.94), rgba(7,16,25,.9));
@@ -282,6 +282,9 @@ button { cursor: pointer; }
 .segment-row strong { font-size: 11px; font-weight: 500; }
 .segment-row p { margin: 3px 0 5px; color: rgba(255,255,255,.43); font-size: 10px; text-transform: capitalize; }
 .segment-row small { color: rgba(255,255,255,.4); font-size: 9px; }
+.segment-stops { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 4px 0 4px; color: rgba(255,255,255,.78); font-size: 11px; text-transform: none; }
+.segment-stops__arrow { color: rgba(255,255,255,.3); font-size: 10px; }
+.segment-coords { color: rgba(139,217,191,.7); font-family: "DM Mono", monospace; font-size: 9px; letter-spacing: .04em; text-transform: uppercase; }
 .segment-meta { display: flex; flex-wrap: wrap; gap: 4px; }
 .segment-meta span { padding: 2px 4px; border-radius: 4px; color: rgba(255,255,255,.35); background: rgba(255,255,255,.035); font: 500 7px ui-monospace, monospace; text-transform: uppercase; }
 .fare-component { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.055); }

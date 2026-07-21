@@ -102,10 +102,19 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCrit
                             <span className="segment-line" style={{ backgroundColor: segment.color }} />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
-                                <strong>{segment.mode === "walk" ? "Jalan kaki" : `${segment.routeCode} · ${segment.routeName}`}</strong>
+                                <strong>{segment.mode === "walk" ? "Jalan kaki" : `${segment.routeCode || segment.serviceName}`}</strong>
                                 <small>{segment.duration}</small>
                               </div>
-                              <p>{segment.from} → {segment.to}</p>
+                              <p className="segment-stops">
+                                <span>{segment.from}</span>
+                                <span className="segment-stops__arrow" aria-hidden="true">→</span>
+                                <span>{segment.to}</span>
+                              </p>
+                              {(segment.fromCoordinate || segment.toCoordinate) && (
+                                <p className="segment-coords">
+                                  {segment.fromCoordinate ?? segment.toCoordinate}
+                                </p>
+                              )}
                               <div className="segment-meta">
                                 <span>{segment.mode}</span><span>{segment.serviceCategory}</span><span>{segment.fare}</span>
                                 <span>{segment.confidence}</span><span>{segment.lastVerifiedAt}</span>

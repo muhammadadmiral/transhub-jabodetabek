@@ -405,6 +405,24 @@ export interface components {
                 number,
                 number
             ][];
+            /**
+             * Fromstopname
+             * @default
+             */
+            fromStopName: string;
+            /**
+             * Tostopname
+             * @default
+             */
+            toStopName: string;
+            /** Fromstoplat */
+            fromStopLat?: number | null;
+            /** Fromstoplng */
+            fromStopLng?: number | null;
+            /** Tostoplat */
+            toStopLat?: number | null;
+            /** Tostoplng */
+            toStopLng?: number | null;
         };
         /**
          * ServiceCategory

@@ -11,6 +11,12 @@ function readableStopId(id: string) {
   return id.split(":").at(-1)?.replaceAll("-", " ") || id;
 }
 
+function coordinateLabel(lat: number | null, lng: number | null) {
+  if (typeof lat !== "number" || typeof lng !== "number") return null;
+  const sign = lat >= 0 ? "" : "-";
+  return `Naik di ${sign}${Math.abs(lat).toFixed(3)}, ${lng.toFixed(3)}`;
+}
+
 const readableValue = (value: string) => value.replaceAll("_", " ");
 
 function readableDate(value: string) {
@@ -46,6 +52,7 @@ export type RouteCardViewModel = {
     duration: string;
     fare: string;
     from: string;
+    fromCoordinate: string | null;
     id: string;
     lastVerifiedAt: string;
     mode: string;
@@ -56,6 +63,7 @@ export type RouteCardViewModel = {
     serviceCategory: string;
     serviceName: string;
     to: string;
+    toCoordinate: string | null;
   }>;
   transferLabel: string;
 };
@@ -101,23 +109,29 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
       id: `${option.criteria}-${option.segments.map((segment) => segment.id).join("-")}`,
       modesLabel: serviceNames.join(" → "),
       quoteMeta: `${readableValue(option.fareQuote.paymentProfile)} · ${option.fareQuote.currency}`,
-      segments: option.segments.map((segment) => ({
-        color: `#${segment.color.replace(/^#/, "")}`,
-        confidence: readableValue(segment.dataConfidence),
-        duration: `${Math.round(segment.avgDurationMin)} menit`,
-        fare: rupiah.format(segment.fare),
-        from: readableStopId(segment.fromStopId),
-        id: segment.id,
-        fareProductId: segment.fareProductId ?? null,
-        lastVerifiedAt: readableDate(segment.lastVerifiedAt),
-        mode: readableValue(segment.mode),
-        routeId: segment.routeId,
-        routeCode: segment.routeCode,
-        routeName: segment.routeName,
-        serviceCategory: readableValue(segment.serviceCategory),
-        serviceName: segment.serviceName,
-        to: readableStopId(segment.toStopId),
-      })),
+      segments: option.segments.map((segment) => {
+        const fromLabel = segment.fromStopName?.trim() || readableStopId(segment.fromStopId);
+        const toLabel = segment.toStopName?.trim() || readableStopId(segment.toStopId);
+        return {
+          color: `#${segment.color.replace(/^#/, "")}`,
+          confidence: readableValue(segment.dataConfidence),
+          duration: `${Math.round(segment.avgDurationMin)} menit`,
+          fare: rupiah.format(segment.fare),
+          from: fromLabel,
+          fromCoordinate: coordinateLabel(segment.fromStopLat ?? null, segment.fromStopLng ?? null),
+          id: segment.id,
+          fareProductId: segment.fareProductId ?? null,
+          lastVerifiedAt: readableDate(segment.lastVerifiedAt),
+          mode: readableValue(segment.mode),
+          routeId: segment.routeId,
+          routeCode: segment.routeCode,
+          routeName: segment.routeName,
+          serviceCategory: readableValue(segment.serviceCategory),
+          serviceName: segment.serviceName,
+          to: toLabel,
+          toCoordinate: coordinateLabel(segment.toStopLat ?? null, segment.toStopLng ?? null),
+        };
+      }),
       transferLabel: `${option.transferCount}× pindah`,
     };
   });
