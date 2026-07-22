@@ -125,7 +125,7 @@ function RouteCard({
                             <span className="segment-line" style={{ backgroundColor: segment.color }} />
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
-                                <strong>{segment.mode === "walk" ? "Jalan kaki" : `${segment.routeCode || segment.serviceName}`}</strong>
+                                <strong>{segment.routeCode === "GATE" ? "Tap & menyeberang stasiun" : segment.mode === "walk" ? "Jalan kaki" : `${segment.routeCode || segment.serviceName}`}</strong>
                                 <small>{segment.duration}</small>
                               </div>
                               <p className="segment-stops">
@@ -134,6 +134,9 @@ function RouteCard({
                                 <span>{segment.to}</span>
                               </p>
                               <p className="segment-coords">Jarak leg {segment.distance}</p>
+                              {segment.instruction && (
+                                <p className="segment-coords">{segment.instruction}</p>
+                              )}
                               {segment.scheduledWait && (
                                 <p className="segment-coords">
                                   {segment.scheduledWait}

@@ -61,6 +61,7 @@ export type RouteCardViewModel = {
     lastVerifiedAt: string;
     mode: string;
     fareProductId: string | null;
+    instruction: string | null;
     routeId: string;
     routeCode: string;
     routeName: string;
@@ -129,6 +130,7 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
           from: fromLabel,
           id: segment.id,
           fareProductId: segment.fareProductId ?? null,
+          instruction: segment.instruction ?? null,
           lastVerifiedAt: readableDate(segment.lastVerifiedAt),
           mode: readableMode(segment.mode),
           routeId: segment.routeId,
@@ -139,7 +141,9 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
             ? `Termasuk ±${segment.scheduledWaitMin.toFixed(1)} menit waktu tunggu terjadwal`
             : null,
           trafficNote: segment.trafficSource === "live_tomtom"
-            ? `ETA lalu lintas aktual · ${segment.trafficFactor?.toFixed(2)}× kondisi bebas`
+            ? `ETA lalu lintas aktual · TomTom · ${segment.trafficFactor?.toFixed(2)}× baseline historis`
+            : segment.trafficSource === "live_google"
+              ? `ETA lalu lintas aktual · Google Routes · ${segment.trafficFactor?.toFixed(2)}× baseline historis`
             : segment.trafficSource === "historical_profile"
               ? `ETA memakai profil lalu lintas waktu setempat · ${segment.trafficFactor?.toFixed(2)}×`
               : null,
