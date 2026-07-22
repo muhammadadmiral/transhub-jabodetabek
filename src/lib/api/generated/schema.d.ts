@@ -140,6 +140,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/geocode/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Places */
+        get: operations["search_places_geocode_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/geocode/reverse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reverse Geocode */
+        get: operations["reverse_geocode_geocode_reverse_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -234,6 +268,11 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * GeocodeSource
+         * @enum {string}
+         */
+        GeocodeSource: "nominatim" | "photon" | "tomtom";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -279,6 +318,24 @@ export interface components {
          * @enum {string}
          */
         PaymentProfile: "standard" | "jaklingko_integrated";
+        /** PlaceResult */
+        PlaceResult: {
+            /** Area */
+            area: string;
+            /** Category */
+            category: string;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Lat */
+            lat: number;
+            /** Lng */
+            lng: number;
+            /** Subtitle */
+            subtitle: string;
+            source: components["schemas"]["GeocodeSource"];
+        };
         /** RouteListResponse */
         RouteListResponse: {
             /** Items */
@@ -339,8 +396,18 @@ export interface components {
              */
             accessRadiusMeters: number;
             /**
+             * Allowridehail
+             * @default true
+             */
+            allowRideHail: boolean;
+            /**
+             * Ridehailradiusmeters
+             * @default 8000
+             */
+            rideHailRadiusMeters: number;
+            /**
              * Maxtransfers
-             * @default 3
+             * @default 5
              */
             maxTransfers: number;
             /** Departureat */
@@ -423,6 +490,21 @@ export interface components {
             toStopLat?: number | null;
             /** Tostoplng */
             toStopLng?: number | null;
+            /** Walkingdistancemeters */
+            walkingDistanceMeters?: number | null;
+            walkingRouteSource?: components["schemas"]["WalkingRouteSource"] | null;
+            /**
+             * Scheduledwaitmin
+             * @default 0
+             */
+            scheduledWaitMin: number;
+            /** Schedulesourceurl */
+            scheduleSourceUrl?: string | null;
+            /** Trafficfactor */
+            trafficFactor?: number | null;
+            trafficSource?: components["schemas"]["TrafficSource"] | null;
+            /** Trafficupdatedat */
+            trafficUpdatedAt?: string | null;
         };
         /**
          * ServiceCategory
@@ -454,10 +536,15 @@ export interface components {
             offset: number;
         };
         /**
+         * TrafficSource
+         * @enum {string}
+         */
+        TrafficSource: "historical_profile" | "live_tomtom";
+        /**
          * TransportMode
          * @enum {string}
          */
-        TransportMode: "krl" | "mrt" | "lrt" | "transjakarta" | "angkot" | "bikun" | "walk";
+        TransportMode: "krl" | "mrt" | "lrt" | "transjakarta" | "jaklingko" | "angkot" | "bikun" | "walk" | "ride_hail";
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -471,6 +558,11 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /**
+         * WalkingRouteSource
+         * @enum {string}
+         */
+        WalkingRouteSource: "fallback" | "valhalla";
     };
     responses: never;
     parameters: never;
@@ -717,6 +809,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FeatureCollection"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_places_geocode_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceResult"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reverse_geocode_geocode_reverse_get: {
+        parameters: {
+            query: {
+                lat: number;
+                lng: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceResult"];
                 };
             };
             /** @description Validation Error */

@@ -73,13 +73,62 @@ function getSelectionCoordinate(selection: LocationSelection) {
 }
 
 function createMarkerElement(kind: LocationKind) {
-  const element = document.createElement("div");
-  element.className = `map-pin map-pin--${kind}`;
-  const core = document.createElement("span");
-  const label = document.createElement("small");
+  const wrapper = document.createElement("div");
+  wrapper.className = `map-pin-wrapper map-pin-wrapper--${kind}`;
+
+  const body = document.createElement("div");
+  body.className = "map-pin-body";
+
+  const core = document.createElement("div");
+  core.className = "map-pin-core";
+
+  const tail = document.createElement("div");
+  tail.className = "map-pin-tail";
+
+  const shadow = document.createElement("div");
+  shadow.className = "map-pin-shadow";
+
+  const label = document.createElement("div");
+  label.className = "map-pin-label";
   label.textContent = kind === "origin" ? "A" : "B";
-  element.append(core, label);
-  return element;
+
+  body.appendChild(core);
+  wrapper.append(body, tail, shadow, label);
+
+  // GSAP bounce-drop animation
+  requestAnimationFrame(() => {
+    wrapper.classList.add("is-dropping");
+    wrapper.addEventListener("animationend", () => wrapper.classList.remove("is-dropping"), { once: true });
+  });
+
+  return wrapper;
+}
+
+function getRoutePadding() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  if (viewportWidth <= 760) {
+    const sheet = document.querySelector<HTMLElement>(".search-sheet");
+    const sheetHeight = sheet && !sheet.classList.contains("is-hidden")
+      ? Math.min(sheet.getBoundingClientRect().height, viewportHeight * 0.92)
+      : 0;
+    const side = Math.max(20, Math.min(44, viewportWidth * 0.075));
+    return {
+      bottom: Math.round(Math.max(90, sheetHeight + 28)),
+      left: Math.round(side),
+      right: Math.round(side),
+      top: Math.round(96 + (window.visualViewport?.offsetTop ?? 0)),
+    };
+  }
+
+  const panel = document.querySelector<HTMLElement>(".search-panel");
+  const panelRight = panel?.getBoundingClientRect().right ?? Math.min(560, viewportWidth * 0.4);
+  return {
+    bottom: Math.round(Math.max(56, viewportHeight * 0.08)),
+    left: Math.round(Math.min(viewportWidth * 0.48, panelRight + 44)),
+    right: Math.round(Math.max(56, viewportWidth * 0.055)),
+    top: Math.round(Math.max(76, viewportHeight * 0.09)),
+  };
 }
 
 function getGeoJsonBounds(featureCollection: GeoJSON.FeatureCollection) {
@@ -98,10 +147,79 @@ function getGeoJsonBounds(featureCollection: GeoJSON.FeatureCollection) {
 
 const CRITERIA_COLORS: Record<string, string> = { cheapest: "#8bd9bf", fastest: "#e9cc75" };
 const CRITERIA_LABELS: Record<string, string> = { cheapest: "Termurah", fastest: "Tercepat" };
+const RUPIAH = new Intl.NumberFormat("id-ID", { currency: "IDR", maximumFractionDigits: 0, style: "currency" });
+
+type JourneyProperties = Record<string, string | number | boolean | null | undefined>;
+
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function buildJourneyPopupHtml(props: JourneyProperties) {
+  const criteria = String(props.criteria ?? "fastest");
+  const accent = CRITERIA_COLORS[criteria] ?? "#e9cc75";
+  const mode = String(props.mode ?? "transit");
+  const isWalk = mode === "walk";
+  const travelMinutes = Math.max(1, Math.round(Number(props.avgDurationMin ?? 0)));
+  const waitMinutes = Math.round(Number(props.scheduledWaitMin ?? 0));
+  const routeIdentity = [props.routeCode, props.routeName].filter(Boolean).join(" · ");
+  const modeLabel = mode === "jaklingko"
+    ? "Mikrotrans"
+    : mode === "ride_hail"
+      ? "Ojek/taksi online (estimasi)"
+      : mode.replaceAll("_", " ").toUpperCase();
+  const timing = waitMinutes > 0
+    ? `${travelMinutes} mnt perjalanan + ±${waitMinutes} mnt tunggu jadwal`
+    : `±${travelMinutes} menit perjalanan`;
+  const trafficFactor = Number(props.trafficFactor ?? 0);
+  const traffic = props.trafficSource
+    ? props.trafficSource === "live_tomtom"
+      ? `Traffic TomTom aktual${trafficFactor ? ` · ${trafficFactor.toFixed(2)}×` : ""}`
+      : `Profil traffic waktu setempat${trafficFactor ? ` · ${trafficFactor.toFixed(2)}×` : ""}`
+    : isWalk ? "Estimasi rute pejalan kaki" : waitMinutes > 0 ? "Jadwal/frekuensi backend" : "Estimasi operasional backend";
+  const updated = props.trafficUpdatedAt
+    ? ` · ${new Date(String(props.trafficUpdatedAt)).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
+    : "";
+
+  return `
+    <div class="journey-popup__inner" style="--accent:${accent}">
+      <span class="journey-popup__badge">${escapeHtml(props.criteriaLabel)} · ${escapeHtml(props.totalDurationMin)} mnt · ${escapeHtml(RUPIAH.format(Number(props.totalFare)))}</span>
+      <strong>${escapeHtml(isWalk ? "Jalan kaki" : props.serviceName ?? modeLabel)}</strong>
+      ${routeIdentity ? `<span class="journey-popup__route">${escapeHtml(routeIdentity)}</span>` : ""}
+      <small>${escapeHtml(modeLabel)} · ${escapeHtml(timing)}</small>
+      <small class="journey-popup__source">${escapeHtml(traffic + updated)}</small>
+    </div>
+  `;
+}
 
 function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
   if (!map.getSource("active-journey")) {
-    map.addSource("active-journey", { data, promoteId: "featureId", type: "geojson" });
+    map.addSource("active-journey", { data, lineMetrics: true, promoteId: "featureId", type: "geojson" });
+    map.addLayer({
+      id: "active-journey-shadow",
+      source: "active-journey",
+      type: "line",
+      filter: ["!=", ["get", "mode"], "walk"],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-blur": 7,
+        "line-color": "#000000",
+        "line-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false], 0.72,
+          ["boolean", ["get", "isSelected"], false], 0.48,
+          0.12,
+        ],
+        "line-translate": [0, 7],
+        "line-translate-anchor": "viewport",
+        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 10, 15, 22],
+      },
+    });
     map.addLayer({
       id: "active-journey-casing",
       source: "active-journey",
@@ -109,12 +227,36 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
         "line-color": ["match", ["get", "criteria"], "fastest", "rgba(233,204,117,.38)", "rgba(139,217,191,.38)"],
-        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.95, 0.45],
+        "line-blur": ["case", ["boolean", ["feature-state", "hover"], false], 0, 0.6],
+        "line-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false], 1,
+          ["boolean", ["get", "isSelected"], false], 0.95,
+          0.42,
+        ],
         "line-width": [
           "interpolate", ["linear"], ["zoom"],
-          9, ["case", ["boolean", ["feature-state", "hover"], false], 8, 6],
-          15, ["case", ["boolean", ["feature-state", "hover"], false], 15, 12],
+          9, ["case", ["boolean", ["feature-state", "hover"], false], 11, 7],
+          15, ["case", ["boolean", ["feature-state", "hover"], false], 21, 13],
         ],
+      },
+    });
+    map.addLayer({
+      id: "active-journey-glow",
+      source: "active-journey",
+      type: "line",
+      filter: ["!=", ["get", "mode"], "walk"],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-blur": ["case", ["boolean", ["feature-state", "hover"], false], 5, 3],
+        "line-color": ["coalesce", ["get", "color"], "#e9cc75"],
+        "line-opacity": [
+          "case",
+          ["boolean", ["feature-state", "hover"], false], 0.78,
+          ["boolean", ["get", "isSelected"], false], 0.42,
+          0.08,
+        ],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 8, 15, 17],
       },
     });
     map.addLayer({
@@ -131,7 +273,11 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
           ["boolean", ["feature-state", "hover"], false], 0.95,
           0.38,
         ],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 2.5, 15, 6],
+        "line-width": [
+          "interpolate", ["linear"], ["zoom"],
+          9, ["case", ["boolean", ["feature-state", "hover"], false], 5, 2.5],
+          15, ["case", ["boolean", ["feature-state", "hover"], false], 10, 6],
+        ],
       },
     });
     map.addLayer({
@@ -182,44 +328,6 @@ function buildJourneyCollection(options: JourneyOptionLike[], selectedCriteria: 
   return { features, type: "FeatureCollection" };
 }
 
-function getAccessConnectors(origin: LocationSelection, destination: LocationSelection): GeoJSON.FeatureCollection {
-  const features: GeoJSON.Feature[] = [];
-  const addConnector = (kind: LocationKind, selection: LocationSelection) => {
-    if (selection.kind !== "pin" || !selection.selectedStop) return;
-    const stop = selection.selectedStop;
-    features.push({
-      geometry: {
-        coordinates: kind === "origin"
-          ? [[selection.coordinate.lng, selection.coordinate.lat], [stop.lng, stop.lat]]
-          : [[stop.lng, stop.lat], [selection.coordinate.lng, selection.coordinate.lat]],
-        type: "LineString",
-      },
-      properties: { distanceMeters: stop.distanceMeters, kind },
-      type: "Feature",
-    });
-  };
-  addConnector("origin", origin);
-  addConnector("destination", destination);
-  return { features, type: "FeatureCollection" };
-}
-
-function ensureConnectorLayer(map: Map, data: GeoJSON.FeatureCollection) {
-  if (map.getSource("access-connectors")) return;
-  map.addSource("access-connectors", { data, type: "geojson" });
-  map.addLayer({
-    id: "access-connectors-line",
-    source: "access-connectors",
-    type: "line",
-    layout: { "line-cap": "round", "line-join": "round" },
-    paint: {
-      "line-color": ["match", ["get", "kind"], "origin", "#e9cc75", "#8bd9bf"],
-      "line-dasharray": [1, 1.6],
-      "line-opacity": 0.9,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 10, 2, 16, 3.5],
-    },
-  });
-}
-
 export function useTransitMap() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
@@ -235,6 +343,8 @@ export function useTransitMap() {
   const journeyRef = useRef(journey);
   journeyRef.current = journey;
   const interactionsBoundRef = useRef(false);
+  const hoverPopupRef = useRef<maplibregl.Popup | null>(null);
+  const detailPopupRef = useRef<maplibregl.Popup | null>(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -282,6 +392,10 @@ export function useTransitMap() {
       resizeObserver.disconnect();
       Object.values(markersRef.current).forEach((marker) => marker?.remove());
       markersRef.current = {};
+      hoverPopupRef.current?.remove();
+      detailPopupRef.current?.remove();
+      hoverPopupRef.current = null;
+      detailPopupRef.current = null;
       useMapStore.getState().registerMap(null);
       interactionsBoundRef.current = false;
       map.remove();
@@ -327,14 +441,6 @@ export function useTransitMap() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || isLoading || !map.isStyleLoaded()) return;
-    const data = getAccessConnectors(originSelection, destinationSelection);
-    ensureConnectorLayer(map, data);
-    (map.getSource("access-connectors") as GeoJSONSource).setData(data);
-  }, [destinationSelection, isLoading, originSelection]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || isLoading || !map.isStyleLoaded()) return;
     const empty: GeoJSON.FeatureCollection = { features: [], type: "FeatureCollection" };
     ensureRouteLayers(map, empty);
     bindJourneyInteractions(map);
@@ -368,12 +474,11 @@ export function useTransitMap() {
         bearing: -10,
         duration: prefersReducedMotion ? 0 : 850,
         maxZoom: 15.5,
-        padding: window.innerWidth <= 760
-          ? { bottom: Math.round(window.innerHeight * 0.42), left: 36, right: 36, top: 100 }
-          : { bottom: 80, left: 500, right: 80, top: 90 },
+        padding: getRoutePadding(),
         pitch: 38,
       });
     }
+
     return () => {
       animation?.kill();
     };
@@ -384,12 +489,27 @@ export function useTransitMap() {
     const map = mapRef.current;
     if (!map || isLoading || !map.getLayer("active-journey-line")) return;
     const hovered = journey.hoveredCriteria;
-    map.setPaintProperty("active-journey-line", "line-opacity", [
+    const emphasis = [
       "case",
       ...(hovered ? [["==", ["get", "criteria"], hovered], 1] as const : []),
       ["boolean", ["get", "isSelected"], false], 1,
       ["boolean", ["feature-state", "hover"], false], 0.95,
       hovered ? 0.22 : 0.38,
+    ];
+    map.setPaintProperty("active-journey-line", "line-opacity", emphasis);
+    map.setPaintProperty("active-journey-glow", "line-opacity", [
+      "case",
+      ...(hovered ? [["==", ["get", "criteria"], hovered], 0.78] as const : []),
+      ["boolean", ["feature-state", "hover"], false], 0.78,
+      ["boolean", ["get", "isSelected"], false], 0.42,
+      hovered ? 0.03 : 0.08,
+    ]);
+    map.setPaintProperty("active-journey-shadow", "line-opacity", [
+      "case",
+      ...(hovered ? [["==", ["get", "criteria"], hovered], 0.7] as const : []),
+      ["boolean", ["feature-state", "hover"], false], 0.72,
+      ["boolean", ["get", "isSelected"], false], 0.48,
+      hovered ? 0.05 : 0.12,
     ]);
   }, [isLoading, journey.hoveredCriteria]);
 
@@ -397,14 +517,24 @@ export function useTransitMap() {
     if (interactionsBoundRef.current) return;
     interactionsBoundRef.current = true;
 
-    const popup = new maplibregl.Popup({
+    const hoverPopup = new maplibregl.Popup({
       className: "journey-popup",
       closeButton: false,
       closeOnClick: false,
-      maxWidth: "260px",
+      maxWidth: "300px",
       offset: 14,
     });
+    const detailPopup = new maplibregl.Popup({
+      className: "journey-popup journey-popup--detail",
+      closeButton: true,
+      closeOnClick: false,
+      maxWidth: "320px",
+      offset: 20,
+    });
+    hoverPopupRef.current = hoverPopup;
+    detailPopupRef.current = detailPopup;
     let hoveredFeatureId: string | number | null = null;
+    let tappedFeatureId: string | number | null = null;
 
     const clearHover = () => {
       if (hoveredFeatureId !== null) {
@@ -412,16 +542,15 @@ export function useTransitMap() {
         hoveredFeatureId = null;
       }
       journeyRef.current.setHoveredCriteria(null);
-      popup.remove();
+      hoverPopup.remove();
       map.getCanvas().style.cursor = "";
     };
 
-    const rupiah = new Intl.NumberFormat("id-ID", { currency: "IDR", maximumFractionDigits: 0, style: "currency" });
-
     map.on("mousemove", "active-journey-casing", (event) => {
+      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
       const feature = event.features?.[0];
       if (!feature) return;
-      const props = feature.properties as Record<string, string | number | boolean>;
+      const props = feature.properties as JourneyProperties;
       if (hoveredFeatureId !== null && hoveredFeatureId !== feature.id) {
         map.setFeatureState({ id: hoveredFeatureId, source: "active-journey" }, { hover: false });
       }
@@ -432,25 +561,44 @@ export function useTransitMap() {
       journeyRef.current.setHoveredCriteria(String(props.criteria));
       map.getCanvas().style.cursor = "pointer";
 
-      const accent = CRITERIA_COLORS[String(props.criteria)] ?? "#e9cc75";
-      const isWalk = props.mode === "walk";
-      popup
+      hoverPopup
         .setLngLat(event.lngLat)
-        .setHTML(`
-          <div class="journey-popup__inner" style="--accent:${accent}">
-            <span class="journey-popup__badge">${props.criteriaLabel} · ${props.totalDurationMin} mnt · ${rupiah.format(Number(props.totalFare))}</span>
-            <strong>${isWalk ? "Jalan kaki" : props.serviceName ?? props.mode}</strong>
-            <small>${String(props.mode).replaceAll("_", " ")} · ±${Math.round(Number(props.avgDurationMin))} menit</small>
-          </div>
-        `)
+        .setHTML(buildJourneyPopupHtml(props))
         .addTo(map);
     });
     map.on("mouseleave", "active-journey-casing", clearHover);
     map.on("click", "active-journey-casing", (event) => {
       const feature = event.features?.[0];
       if (!feature) return;
-      const criteria = String((feature.properties as Record<string, unknown>).criteria);
+      event.originalEvent.stopPropagation();
+      const props = feature.properties as JourneyProperties;
+      const criteria = String(props.criteria);
+      if (tappedFeatureId !== null && tappedFeatureId !== feature.id) {
+        map.setFeatureState({ id: tappedFeatureId, source: "active-journey" }, { hover: false });
+      }
+      tappedFeatureId = feature.id ?? null;
+      if (tappedFeatureId !== null) {
+        map.setFeatureState({ id: tappedFeatureId, source: "active-journey" }, { hover: true });
+      }
       journeyRef.current.selectCriteria(criteria);
+      hoverPopup.remove();
+      detailPopup
+        .setLngLat(event.lngLat)
+        .setHTML(buildJourneyPopupHtml(props))
+        .addTo(map);
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      map.easeTo({
+        center: event.lngLat,
+        duration: reducedMotion ? 0 : 650,
+        pitch: 62,
+        zoom: Math.max(map.getZoom(), 15.2),
+      });
+    });
+    detailPopup.on("close", () => {
+      if (tappedFeatureId !== null) {
+        map.setFeatureState({ id: tappedFeatureId, source: "active-journey" }, { hover: false });
+        tappedFeatureId = null;
+      }
     });
   }
 

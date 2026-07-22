@@ -4,15 +4,97 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#07111f" />
-    <meta name="description" content="TransHub Jabodetabek — cari rute KRL, MRT, LRT, TransJakarta, dan angkot dalam satu peta 3D." />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Cari rute KRL, MRT, LRT, TransJakarta, dan angkot di Jabodetabek. Bandingkan waktu dan tarif secara instan dalam satu peta interaktif." />
+    <meta name="keywords" content="rute KRL, MRT Jakarta, LRT Jabodebek, TransJakarta, angkot, transportasi umum Jabodetabek, peta transit, cari rute, naik kendaraan umum" />
+    <meta name="robots" content="index, follow" />
+    <meta name="application-name" content="TransHub Jabodetabek" />
+    <meta name="author" content="TransHub" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:site_name" content="TransHub Jabodetabek" />
+    <meta property="og:title" content="TransHub Jabodetabek — Rute Transportasi Umum" />
+    <meta property="og:description" content="Cari rute KRL, MRT, LRT, TransJakarta, dan angkot di Jabodetabek dalam satu peta." />
+    <meta property="og:image" content="/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="TransHub Jabodetabek — Satu peta, semua moda" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TransHub Jabodetabek — Rute Transportasi Umum" />
+    <meta name="twitter:description" content="Cari rute transportasi umum Jabodetabek dalam satu peta." />
+    <meta name="twitter:image" content="/social-card.png" />
+    <meta name="twitter:image:alt" content="TransHub Jabodetabek — KRL, MRT, LRT, TransJakarta, dan angkot" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
     />
-    <title>TransHub Jabodetabek</title>
+    <title>TransHub Jabodetabek — Rute Transportasi Umum</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "TransHub Jabodetabek",
+        "alternateName": "TransHub",
+        "description": "Pencari rute multimoda untuk KRL, MRT, LRT, TransJakarta, dan angkot di Jabodetabek. Bandingkan waktu dan tarif secara instan.",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "id",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "IDR" },
+        "featureList": ["Pencarian rute multimoda", "Perbandingan tarif", "Peta interaktif", "KRL, MRT, LRT, TransJakarta, Angkot"],
+        "screenshot": "/social-card.png",
+        "keywords": "transportasi umum, KRL, MRT, LRT, TransJakarta, Jabodetabek, peta transit"
+      }
+    </script>
+    <script>
+      (() => {
+        const fallbackOrigin = window.location.origin;
+        let configured = "";
+        try {
+          const meta = document.currentScript && document.currentScript.previousElementSibling;
+          if (meta && meta instanceof HTMLMetaElement) {
+            configured = meta.getAttribute("data-site-url") || "";
+          }
+        } catch {}
+        const buildTime = typeof __VITE_SITE_URL__ !== "undefined" && __VITE_SITE_URL__ ? __VITE_SITE_URL__ : "";
+        const siteUrl = [buildTime, configured].find((value) => value && value.startsWith("http")) || fallbackOrigin;
+        const canonicalUrl = new URL("/", siteUrl).href;
+        const canonical = document.createElement("link");
+        canonical.rel = "canonical";
+        canonical.href = canonicalUrl;
+        document.head.appendChild(canonical);
+        const socialImage = new URL("/social-card.png", siteUrl).href;
+        const head = document.head;
+        const existingOgImage = head.querySelector('meta[property="og:image"]');
+        if (existingOgImage) existingOgImage.setAttribute("content", socialImage);
+        const existingTwitterImage = head.querySelector('meta[name="twitter:image"]');
+        if (existingTwitterImage) existingTwitterImage.setAttribute("content", socialImage);
+        if (!head.querySelector('meta[property="og:url"]')) {
+          const ogUrl = document.createElement("meta");
+          ogUrl.setAttribute("property", "og:url");
+          ogUrl.content = canonicalUrl;
+          head.appendChild(ogUrl);
+        }
+        if (!head.querySelector('script[type="application/ld+json"][data-runtime="site-url"]')) {
+          const ld = document.createElement("script");
+          ld.type = "application/ld+json";
+          ld.dataset.runtime = "site-url";
+          ld.textContent = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            url: canonicalUrl,
+            image: socialImage,
+            inLanguage: "id",
+          });
+          head.appendChild(ld);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

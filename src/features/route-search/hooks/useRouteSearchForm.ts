@@ -73,13 +73,14 @@ export function useRouteSearchForm() {
     if (!canSubmit) return null;
     return {
       accessRadiusMeters: 1500,
+      allowRideHail: true,
       ...(destinationSelection.kind === "pin"
         ? {
             destinationLat: destinationSelection.coordinate.lat,
             destinationLng: destinationSelection.coordinate.lng,
           }
         : { destinationStopId: destinationSelection.stop.id }),
-      maxTransfers: 3,
+      maxTransfers: 5,
       ...(originSelection.kind === "pin"
         ? {
             originLat: originSelection.coordinate.lat,
@@ -87,6 +88,7 @@ export function useRouteSearchForm() {
           }
         : { originStopId: originSelection.stop.id }),
       paymentProfile: "standard",
+      rideHailRadiusMeters: 8000,
     };
   }
 

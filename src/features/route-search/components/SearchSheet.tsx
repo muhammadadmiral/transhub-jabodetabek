@@ -4,21 +4,33 @@ import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { useMapStore } from "../../../store/mapStore";
 import { hasSearchActivity, SearchPanel, SearchPanelContent, type SearchPanelProps } from "./SearchPanel";
 
-const SNAP_POINTS = [0.24, 0.55, 0.94];
+const COMPACT_SNAP = 0.2;
+const ACTIVE_SNAP = 0.52;
+const FULL_SNAP = 0.9;
+const SNAP_POINTS = [COMPACT_SNAP, ACTIVE_SNAP, FULL_SNAP];
 
 export function SearchSheet(props: SearchPanelProps) {
   const isMobile = useMediaQuery("(max-width: 760px)");
   const pinMode = useMapStore((state) => state.pinMode);
-  const [snapPoint, setSnapPoint] = useState<number | string | null>(SNAP_POINTS[0]);
+  const [snapPoint, setSnapPoint] = useState<number | string | null>(COMPACT_SNAP);
   const hasActivity = hasSearchActivity(props);
+  const isCompact = snapPoint === COMPACT_SNAP;
+  const isFull = snapPoint === FULL_SNAP;
 
   useEffect(() => {
-    // Saat hasil rute muncul, buka setengah — jangan penuh agar peta tetap terlihat.
-    if (hasActivity) setSnapPoint(SNAP_POINTS[1]);
-    else setSnapPoint(SNAP_POINTS[0]);
+    // Keep the route and its endpoints visible while presenting useful results.
+    setSnapPoint(hasActivity ? ACTIVE_SNAP : COMPACT_SNAP);
   }, [hasActivity]);
 
   if (!isMobile) return <SearchPanel {...props} />;
+
+  const guide = isCompact
+    ? "Geser ke atas untuk mencari rute"
+    : isFull
+      ? "Geser ke bawah untuk melihat peta"
+      : hasActivity
+        ? "Geser untuk membandingkan rute dan peta"
+        : "Geser ke atas untuk pilihan lengkap";
 
   return (
     <Drawer.Root
@@ -31,12 +43,19 @@ export function SearchSheet(props: SearchPanelProps) {
       repositionInputs={false}
     >
       <Drawer.Portal>
-        <Drawer.Content className={`search-sheet${pinMode ? " is-hidden" : ""}`} aria-labelledby="search-title">
-          <div className="search-sheet__grabber" aria-hidden="true" />
+        <Drawer.Content
+          className={`search-sheet${pinMode ? " is-hidden" : ""}${isCompact ? " is-compact" : ""}`}
+          aria-labelledby="search-title"
+          data-snap={isCompact ? "compact" : isFull ? "full" : "active"}
+        >
+          <div className="search-sheet__handle" aria-hidden="true">
+            <div className="search-sheet__grabber" />
+            <span className="search-sheet__guide">{guide}</span>
+          </div>
           <div
             className="search-sheet__scroll"
             onFocusCapture={(event) => {
-              if (event.target instanceof HTMLInputElement) setSnapPoint(SNAP_POINTS[1]);
+              if (event.target instanceof HTMLInputElement) setSnapPoint(ACTIVE_SNAP);
             }}
           >
             <SearchPanelContent {...props} />

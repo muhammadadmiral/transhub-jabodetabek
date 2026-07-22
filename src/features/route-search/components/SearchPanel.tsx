@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { ArrowUpDown, Clock3, Search } from "lucide-react";
 import type { RouteSearchResponse } from "../../../lib/api/routes";
 import { LocationField, type LocationAutocompleteModel } from "./LocationField";
@@ -26,6 +26,7 @@ export function hasSearchActivity(props: SearchPanelProps) {
 
 export function SearchPanelContent(props: SearchPanelProps) {
   const hasResults = hasSearchActivity(props);
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <div className="search-panel__content">
@@ -61,8 +62,8 @@ export function SearchPanelContent(props: SearchPanelProps) {
           className="primary-button"
           type="submit"
           disabled={!props.canSubmit || props.isSearching}
-          whileHover={props.canSubmit ? { y: -2, scale: 1.005 } : undefined}
-          whileTap={props.canSubmit ? { scale: 0.985 } : undefined}
+          whileHover={!prefersReducedMotion && props.canSubmit ? { y: -2, scale: 1.005 } : undefined}
+          whileTap={!prefersReducedMotion && props.canSubmit ? { scale: 0.985 } : undefined}
         >
           <span>{props.isSearching ? "Menyusun rute" : "Cari rute"}</span>
           <span className="primary-button__icon"><Search size={17} /></span>
@@ -96,9 +97,9 @@ export function SearchPanel(props: SearchPanelProps) {
       className={`search-panel${hasResults ? " has-results" : ""}`}
       aria-labelledby="search-title"
       layout
-      initial={{ opacity: 0, rotateY: -8, scale: 0.96, x: -24, y: "-50%" }}
+      initial={{ opacity: 0, rotateY: -12, scale: 0.94, x: -28, y: "-50%" }}
       animate={{ opacity: 1, rotateY: 0, scale: 1, x: 0, y: "-50%" }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], layout: { duration: 0.42 } }}
+      transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1], layout: { duration: 0.42 } }}
     >
       <span className="panel-depth panel-depth--one" aria-hidden="true" />
       <span className="panel-depth panel-depth--two" aria-hidden="true" />

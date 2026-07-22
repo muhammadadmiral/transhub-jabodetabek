@@ -1,51 +1,14 @@
-export type PlaceResult = {
-  area: string;
-  category: string;
-  id: string;
-  label: string;
-  lat: number;
-  lng: number;
-  subtitle: string;
-};
+import type { components } from "./generated/schema";
+import { apiRequest } from "./client";
+
+export type PlaceResult = components["schemas"]["PlaceResult"];
 
 export async function searchPlaces(query: string, signal?: AbortSignal) {
   const search = new URLSearchParams({ q: query });
-  const response = await fetch(`/api/geocode?${search}`, {
-    headers: { Accept: "application/json" },
-    signal,
-  });
-  if (!response.ok) throw new Error("Pencarian lokasi gagal");
-  const body = await response.json() as Array<PlaceResult | {
-    address?: Record<string, string>;
-    category?: string;
-    display_name: string;
-    lat: string;
-    lon: string;
-    name?: string;
-    place_id: number;
-    type?: string;
-  }>;
-
-  return body.map((result) => {
-    if ("label" in result) return result;
-    return {
-      area: result.address?.city || result.address?.town || result.address?.county || result.address?.state || "Indonesia",
-      category: result.type || result.category || "place",
-      id: String(result.place_id),
-      label: result.name || result.display_name.split(",")[0],
-      lat: Number(result.lat),
-      lng: Number(result.lon),
-      subtitle: result.display_name,
-    };
-  });
+  return apiRequest<PlaceResult[]>(`/geocode/search?${search}`, { signal });
 }
 
 export async function reverseGeocode(lat: number, lng: number, signal?: AbortSignal) {
   const search = new URLSearchParams({ lat: lat.toFixed(6), lng: lng.toFixed(6) });
-  const response = await fetch(`/api/geocode?${search}`, {
-    headers: { Accept: "application/json" },
-    signal,
-  });
-  if (!response.ok) throw new Error("Alamat titik tidak dapat ditemukan");
-  return response.json() as Promise<PlaceResult>;
+  return apiRequest<PlaceResult>(`/geocode/reverse?${search}`, { signal });
 }
