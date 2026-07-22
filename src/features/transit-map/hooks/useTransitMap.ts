@@ -234,9 +234,9 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
         "line-color": "#000000",
         "line-opacity": [
           "case",
-          ["boolean", ["feature-state", "hover"], false], 0.72,
-          ["boolean", ["get", "isSelected"], false], 0.48,
-          0.12,
+          ["boolean", ["feature-state", "hover"], false], 0.85,
+          ["boolean", ["get", "isSelected"], false], 0.7,
+          0.3,
         ],
         "line-translate": [0, 7],
         "line-translate-anchor": "viewport",
@@ -249,18 +249,18 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       type: "line",
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-color": ["match", ["get", "criteria"], "fastest", "rgba(233,204,117,.38)", "rgba(139,217,191,.38)"],
-        "line-blur": ["case", ["boolean", ["feature-state", "hover"], false], 0, 0.6],
+        "line-color": ["match", ["get", "criteria"], "fastest", "rgba(224, 185, 59, 0.8)", "rgba(99, 196, 163, 0.8)"],
+        "line-blur": ["case", ["boolean", ["feature-state", "hover"], false], 0, 1],
         "line-opacity": [
           "case",
           ["boolean", ["feature-state", "hover"], false], 1,
           ["boolean", ["get", "isSelected"], false], 0.95,
-          0.42,
+          0.5,
         ],
         "line-width": [
           "interpolate", ["linear"], ["zoom"],
           9, ["case", ["boolean", ["feature-state", "hover"], false], 11, 7],
-          15, ["case", ["boolean", ["feature-state", "hover"], false], 21, 13],
+          15, ["case", ["boolean", ["feature-state", "hover"], false], 23, 15],
         ],
       },
     });
@@ -271,13 +271,13 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       filter: ["!=", ["get", "mode"], "walk"],
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-blur": ["case", ["boolean", ["feature-state", "hover"], false], 5, 3],
+        "line-blur": ["case", ["boolean", ["feature-state", "hover"], false], 4, 2],
         "line-color": ["coalesce", ["get", "color"], "#e9cc75"],
         "line-opacity": [
           "case",
-          ["boolean", ["feature-state", "hover"], false], 0.78,
-          ["boolean", ["get", "isSelected"], false], 0.42,
-          0.08,
+          ["boolean", ["feature-state", "hover"], false], 0.9,
+          ["boolean", ["get", "isSelected"], false], 0.7,
+          0.25,
         ],
         "line-width": ["interpolate", ["linear"], ["zoom"], 9, 8, 15, 17],
       },
@@ -299,7 +299,7 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
           "case",
           ["boolean", ["get", "isSelected"], false], 1,
           ["boolean", ["feature-state", "hover"], false], 0.95,
-          0.38,
+          0.6,
         ],
         "line-width": [
           "interpolate", ["linear"], ["zoom"],
@@ -315,8 +315,8 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       filter: ["!=", ["get", "mode"], "walk"],
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-gradient": movingPulseGradient(0),
-        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.96, 0.18],
+        "line-gradient": movingStripesGradient(0),
+        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 1, 0.4],
         "line-width": ["interpolate", ["linear"], ["zoom"], 9, 2.5, 15, 6],
       },
     });
@@ -341,32 +341,54 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       },
     });
     map.addLayer({
+      id: "active-journey-walk-casing",
+      source: "active-journey",
+      type: "line",
+      filter: ["==", ["get", "mode"], "walk"],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-color": "#050b12",
+        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.8, 0.4],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 4, 15, 8],
+      },
+    });
+    map.addLayer({
       id: "active-journey-walk",
       source: "active-journey",
       type: "line",
       filter: ["==", ["get", "mode"], "walk"],
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-color": ["coalesce", ["get", "color"], "#94a3b8"],
-        "line-dasharray": [1.2, 1.5],
-        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.9, 0.3],
+        "line-color": ["coalesce", ["get", "color"], "#cbd5e1"],
+        "line-dasharray": [0.1, 1.8],
+        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 1, 0.5],
         "line-width": ["interpolate", ["linear"], ["zoom"], 9, 2, 15, 4],
       },
     });
   }
 }
 
-function movingPulseGradient(progress: number) {
-  const center = Math.min(0.995, Math.max(0.005, progress));
-  const tail = Math.max(0, center - 0.14);
-  const head = Math.min(1, center + 0.08);
+function movingStripesGradient(timestamp: number) {
+  const phaseOffset = (timestamp % 2000) / 2000;
+  const stops: any[] = [];
+  const numStops = 40;
+  const freq = 6; // number of stripes along the line
+
+  for (let i = 0; i <= numStops; i++) {
+    const p = i / numStops;
+    const cycle = ((p - phaseOffset) * freq) % 1;
+    const normCycle = cycle < 0 ? cycle + 1 : cycle;
+    let intensity = 0;
+    if (normCycle > 0.4) {
+      intensity = Math.pow((normCycle - 0.4) / 0.6, 2);
+    }
+    const alpha = intensity * 0.95;
+    stops.push(p, `rgba(255,255,255,${alpha.toFixed(3)})`);
+  }
+
   return [
     "interpolate", ["linear"], ["line-progress"],
-    0, "rgba(255,255,255,0)",
-    tail, "rgba(255,255,255,0)",
-    center, "rgba(255,255,255,.98)",
-    head, "rgba(255,255,255,0)",
-    1, "rgba(255,255,255,0)",
+    ...stops
   ] as maplibregl.ExpressionSpecification;
 }
 
@@ -566,9 +588,9 @@ export function useTransitMap() {
     let frame = 0;
     let lastPaintAt = 0;
     const animateDirection = (timestamp: number) => {
-      if (timestamp - lastPaintAt >= 45) {
+      if (timestamp - lastPaintAt >= 32) {
         lastPaintAt = timestamp;
-        map.setPaintProperty("active-journey-motion", "line-gradient", movingPulseGradient((timestamp % 2400) / 2400));
+        map.setPaintProperty("active-journey-motion", "line-gradient", movingStripesGradient(timestamp));
       }
       frame = window.requestAnimationFrame(animateDirection);
     };
@@ -586,22 +608,22 @@ export function useTransitMap() {
       ...(hovered ? [["==", ["get", "criteria"], hovered], 1] as const : []),
       ["boolean", ["get", "isSelected"], false], 1,
       ["boolean", ["feature-state", "hover"], false], 0.95,
-      hovered ? 0.22 : 0.38,
+      hovered ? 0.45 : 0.6,
     ];
     map.setPaintProperty("active-journey-line", "line-opacity", emphasis);
     map.setPaintProperty("active-journey-glow", "line-opacity", [
       "case",
       ...(hovered ? [["==", ["get", "criteria"], hovered], 0.78] as const : []),
       ["boolean", ["feature-state", "hover"], false], 0.78,
-      ["boolean", ["get", "isSelected"], false], 0.42,
-      hovered ? 0.03 : 0.08,
+      ["boolean", ["get", "isSelected"], false], 0.7,
+      hovered ? 0.1 : 0.25,
     ]);
     map.setPaintProperty("active-journey-shadow", "line-opacity", [
       "case",
-      ...(hovered ? [["==", ["get", "criteria"], hovered], 0.7] as const : []),
-      ["boolean", ["feature-state", "hover"], false], 0.72,
-      ["boolean", ["get", "isSelected"], false], 0.48,
-      hovered ? 0.05 : 0.12,
+      ...(hovered ? [["==", ["get", "criteria"], hovered], 0.8] as const : []),
+      ["boolean", ["feature-state", "hover"], false], 0.85,
+      ["boolean", ["get", "isSelected"], false], 0.7,
+      hovered ? 0.15 : 0.3,
     ]);
   }, [isLoading, journey.hoveredCriteria]);
 
