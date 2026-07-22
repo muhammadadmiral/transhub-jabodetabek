@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
 import { ChevronDown, Clock3, Database, ExternalLink, ShieldCheck, Users, WalletCards } from "lucide-react";
 import { ApiError } from "../../../lib/api/errors";
+import { usePrefersReducedMotion } from "../../../hooks/usePrefersReducedMotion";
 import { cn } from "../../../lib/cn";
 import type { RouteCardViewModel } from "../lib/routeViewModel";
 
@@ -23,6 +24,7 @@ const CRITERIA_LINE: Record<string, { className: string; label: string }> = {
 
 export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCriteria, onSelectCriteria, selectedCriteria }: RouteResultsProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   if (isLoading) {
     return <div className="route-feedback" aria-live="polite"><span className="route-loader" /><strong>Menyusun perjalanan</strong><small>Membandingkan waktu dan tarif.</small></div>;
@@ -37,7 +39,7 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCrit
   if (cards.length === 0) return null;
 
   return (
-    <motion.div className="route-results" layout aria-live="polite">
+    <motion.div className="route-results" layout={!prefersReducedMotion} aria-live="polite">
       <div className="route-results__heading"><span>Opsi perjalanan</span><small>{cards.length} opsi</small></div>
       <div className="route-card-list">
         {cards.map((card, index) => {
@@ -47,10 +49,10 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCrit
             <motion.article
               className={cn("route-card", isSelected && "is-selected")}
               key={card.id}
-              layout
-              initial={{ opacity: 0, y: 18, rotateX: -8 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ delay: index * 0.08, duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+              layout={!prefersReducedMotion}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={prefersReducedMotion ? { duration: 0 } : { delay: index * 0.065, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
               onClick={() => onSelectCriteria(card.criteria)}
               onMouseEnter={() => onHoverCriteria?.(card.criteria)}
               onMouseLeave={() => onHoverCriteria?.(null)}
