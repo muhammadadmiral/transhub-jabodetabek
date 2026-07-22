@@ -32,21 +32,60 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
     />
     <title>TransHub Jabodetabek — Rute Transportasi Umum</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "TransHub Jabodetabek",
+        "alternateName": "TransHub",
+        "description": "Pencari rute multimoda untuk KRL, MRT, LRT, TransJakarta, dan angkot di Jabodetabek.",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "id",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "IDR" }
+      }
+    </script>
     <script>
       (() => {
-        const raw = "%VITE_SITE_URL%";
-        const configuredUrl = raw && raw !== "%VITE_SITE_URL%" ? raw : "";
-        const siteUrl = configuredUrl.startsWith("http") ? configuredUrl : window.location.origin;
+        const fallbackOrigin = window.location.origin;
+        let configured = "";
+        try {
+          const meta = document.currentScript && document.currentScript.previousElementSibling;
+          if (meta && meta instanceof HTMLMetaElement) {
+            configured = meta.getAttribute("data-site-url") || "";
+          }
+        } catch {}
+        const buildTime = typeof __VITE_SITE_URL__ !== "undefined" && __VITE_SITE_URL__ ? __VITE_SITE_URL__ : "";
+        const siteUrl = [buildTime, configured].find((value) => value && value.startsWith("http")) || fallbackOrigin;
         const canonicalUrl = new URL("/", siteUrl).href;
         const canonical = document.createElement("link");
         canonical.rel = "canonical";
         canonical.href = canonicalUrl;
-        document.head.append(canonical);
-        for (const [property, content] of [["og:url", canonicalUrl], ["og:image", new URL("/social-card.png", siteUrl).href]]) {
-          const meta = document.createElement("meta");
-          meta.setAttribute("property", property);
-          meta.content = content;
-          document.head.append(meta);
+        document.head.appendChild(canonical);
+        const socialImage = new URL("/social-card.png", siteUrl).href;
+        const head = document.head;
+        const existingOgImage = head.querySelector('meta[property="og:image"]');
+        if (existingOgImage) existingOgImage.setAttribute("content", socialImage);
+        const existingTwitterImage = head.querySelector('meta[name="twitter:image"]');
+        if (existingTwitterImage) existingTwitterImage.setAttribute("content", socialImage);
+        if (!head.querySelector('meta[property="og:url"]')) {
+          const ogUrl = document.createElement("meta");
+          ogUrl.setAttribute("property", "og:url");
+          ogUrl.content = canonicalUrl;
+          head.appendChild(ogUrl);
+        }
+        if (!head.querySelector('script[type="application/ld+json"][data-runtime="site-url"]')) {
+          const ld = document.createElement("script");
+          ld.type = "application/ld+json";
+          ld.dataset.runtime = "site-url";
+          ld.textContent = JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            url: canonicalUrl,
+            image: socialImage,
+            inLanguage: "id",
+          });
+          head.appendChild(ld);
         }
       })();
     </script>
