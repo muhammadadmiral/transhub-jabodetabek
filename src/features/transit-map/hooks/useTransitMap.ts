@@ -82,6 +82,33 @@ function createMarkerElement(kind: LocationKind) {
   return element;
 }
 
+function getRoutePadding() {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  if (viewportWidth <= 760) {
+    const sheet = document.querySelector<HTMLElement>(".search-sheet");
+    const sheetHeight = sheet && !sheet.classList.contains("is-hidden")
+      ? Math.min(sheet.getBoundingClientRect().height, viewportHeight * 0.92)
+      : 0;
+    const side = Math.max(20, Math.min(44, viewportWidth * 0.075));
+    return {
+      bottom: Math.round(Math.max(90, sheetHeight + 28)),
+      left: Math.round(side),
+      right: Math.round(side),
+      top: Math.round(96 + (window.visualViewport?.offsetTop ?? 0)),
+    };
+  }
+
+  const panel = document.querySelector<HTMLElement>(".search-panel");
+  const panelRight = panel?.getBoundingClientRect().right ?? Math.min(560, viewportWidth * 0.4);
+  return {
+    bottom: Math.round(Math.max(56, viewportHeight * 0.08)),
+    left: Math.round(Math.min(viewportWidth * 0.48, panelRight + 44)),
+    right: Math.round(Math.max(56, viewportWidth * 0.055)),
+    top: Math.round(Math.max(76, viewportHeight * 0.09)),
+  };
+}
+
 function getGeoJsonBounds(featureCollection: GeoJSON.FeatureCollection) {
   const bounds = new maplibregl.LngLatBounds();
   const visit = (coordinates: unknown) => {
@@ -180,44 +207,6 @@ function buildJourneyCollection(options: JourneyOptionLike[], selectedCriteria: 
     });
   });
   return { features, type: "FeatureCollection" };
-}
-
-function getAccessConnectors(origin: LocationSelection, destination: LocationSelection): GeoJSON.FeatureCollection {
-  const features: GeoJSON.Feature[] = [];
-  const addConnector = (kind: LocationKind, selection: LocationSelection) => {
-    if (selection.kind !== "pin" || !selection.selectedStop) return;
-    const stop = selection.selectedStop;
-    features.push({
-      geometry: {
-        coordinates: kind === "origin"
-          ? [[selection.coordinate.lng, selection.coordinate.lat], [stop.lng, stop.lat]]
-          : [[stop.lng, stop.lat], [selection.coordinate.lng, selection.coordinate.lat]],
-        type: "LineString",
-      },
-      properties: { distanceMeters: stop.distanceMeters, kind },
-      type: "Feature",
-    });
-  };
-  addConnector("origin", origin);
-  addConnector("destination", destination);
-  return { features, type: "FeatureCollection" };
-}
-
-function ensureConnectorLayer(map: Map, data: GeoJSON.FeatureCollection) {
-  if (map.getSource("access-connectors")) return;
-  map.addSource("access-connectors", { data, type: "geojson" });
-  map.addLayer({
-    id: "access-connectors-line",
-    source: "access-connectors",
-    type: "line",
-    layout: { "line-cap": "round", "line-join": "round" },
-    paint: {
-      "line-color": ["match", ["get", "kind"], "origin", "#e9cc75", "#8bd9bf"],
-      "line-dasharray": [1, 1.6],
-      "line-opacity": 0.9,
-      "line-width": ["interpolate", ["linear"], ["zoom"], 10, 2, 16, 3.5],
-    },
-  });
 }
 
 export function useTransitMap() {
@@ -327,14 +316,6 @@ export function useTransitMap() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || isLoading || !map.isStyleLoaded()) return;
-    const data = getAccessConnectors(originSelection, destinationSelection);
-    ensureConnectorLayer(map, data);
-    (map.getSource("access-connectors") as GeoJSONSource).setData(data);
-  }, [destinationSelection, isLoading, originSelection]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || isLoading || !map.isStyleLoaded()) return;
     const empty: GeoJSON.FeatureCollection = { features: [], type: "FeatureCollection" };
     ensureRouteLayers(map, empty);
     bindJourneyInteractions(map);
@@ -368,12 +349,11 @@ export function useTransitMap() {
         bearing: -10,
         duration: prefersReducedMotion ? 0 : 850,
         maxZoom: 15.5,
-        padding: window.innerWidth <= 760
-          ? { bottom: Math.round(window.innerHeight * 0.42), left: 36, right: 36, top: 100 }
-          : { bottom: 80, left: 500, right: 80, top: 90 },
+        padding: getRoutePadding(),
         pitch: 38,
       });
     }
+
     return () => {
       animation?.kill();
     };

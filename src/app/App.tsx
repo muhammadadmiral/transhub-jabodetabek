@@ -19,12 +19,15 @@ export function App() {
   const shellRef = useRef<HTMLElement>(null);
 
   useGSAP(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) return;
-    gsap.timeline({ defaults: { ease: "power3.out" } })
-      .from(".topbar", { autoAlpha: 0, y: -22, duration: 0.7, delay: 0.15 })
-      .from(".map-status", { autoAlpha: 0, y: 10, duration: 0.5 }, "-=0.35")
-      .from(".map-controls", { autoAlpha: 0, x: 14, duration: 0.5 }, "-=0.4");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduceMotion.matches) return;
+
+    const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+    timeline
+      .from(".topbar", { autoAlpha: 0, y: -18, duration: 0.65, delay: 0.12 })
+      .from(".map-status", { autoAlpha: 0, y: 10, duration: 0.45 }, "-=0.4")
+      .from(".map-controls", { autoAlpha: 0, x: 14, duration: 0.45 }, "-=0.35");
+    return () => timeline.kill();
   }, { scope: shellRef });
 
   return (
