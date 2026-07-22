@@ -355,100 +355,183 @@ button { cursor: pointer; }
 .assumption-list { display: grid; gap: 5px; margin: 0; padding-left: 15px; color: rgba(255,255,255,.4); font-size: 9px; line-height: 1.5; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── 3D Premium Map Pin ─── */
+/* ─── Standing 3D Premium Map Pin ─── */
 .map-pin-wrapper {
   position: relative;
-  width: 36px;
-  height: 48px;
+  width: 44px;
+  height: 64px;
   cursor: grab;
-  filter: drop-shadow(0 14px 22px rgba(0,0,0,.52)) drop-shadow(0 4px 6px rgba(0,0,0,.38));
+  perspective: 700px;
+  transform-style: preserve-3d;
   transform-origin: 50% 100%;
   will-change: transform;
+  pointer-events: auto;
 }
-.map-pin-wrapper:active { cursor: grabbing; }
-.map-pin-body {
+.map-pin-wrapper:active {
+  cursor: grabbing;
+}
+
+/* Target Ring on Map Ground Level (Right at needle tip) */
+.map-pin-ground-ring {
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
-  width: 36px;
-  height: 36px;
-  border-radius: 50% 50% 50% 8px;
-  transform: translateX(-50%) rotate(-45deg);
-  background: linear-gradient(135deg, #f8e48a 0%, #d4a217 60%, #9a7210 100%);
-  border: 1.5px solid rgba(255,255,255,.55);
-  box-shadow:
-    inset 0 2px 4px rgba(255,255,255,.65),
-    inset 0 -2px 6px rgba(0,0,0,.28),
-    inset 3px 0 8px rgba(0,0,0,.12);
-}
-.map-pin-body::before {
-  content: '';
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 12px;
-  height: 6px;
+  transform: translate(-50%, 50%) rotateX(70deg);
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: rgba(255,255,255,.45);
-  filter: blur(3px);
-  transform: rotate(15deg);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 14px var(--gold), inset 0 0 6px var(--gold);
+  opacity: 0.85;
+  pointer-events: none;
+  animation: ground-ring-pulse 2s ease-in-out infinite;
 }
-.map-pin-core {
+.map-pin-wrapper--destination .map-pin-ground-ring {
+  border-color: var(--mint);
+  box-shadow: 0 0 14px var(--mint), inset 0 0 6px var(--mint);
+}
+
+@keyframes ground-ring-pulse {
+  0%, 100% { transform: translate(-50%, 50%) rotateX(70deg) scale(0.9); opacity: 0.7; }
+  50%      { transform: translate(-50%, 50%) rotateX(70deg) scale(1.3); opacity: 1; }
+}
+
+/* Ground Shadow under the pin tip */
+.map-pin-shadow {
   position: absolute;
-  top: 50%;
+  bottom: -2px;
   left: 50%;
-  width: 12px;
+  transform: translateX(-50%) rotateX(75deg);
+  width: 32px;
   height: 12px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 80%);
+  filter: blur(3px);
   border-radius: 50%;
-  border: 2.5px solid rgba(6,14,22,.72);
-  background: rgba(6,14,22,.18);
-  transform: translate(-50%, -50%) rotate(45deg);
+  pointer-events: none;
 }
-.map-pin-tail {
+
+/* Standing 3D Assembly (stands straight up from map needle point) */
+.map-pin-3d {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 44px;
+  height: 64px;
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.map-pin-wrapper:hover .map-pin-3d {
+  transform: translateX(-50%) translateY(-6px) rotateX(10deg) scale(1.08);
+}
+
+/* Metallic Needle Shaft (Jarum Pin Akurat) */
+.map-pin-needle {
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 13px solid #b88f14;
-  filter: drop-shadow(0 4px 4px rgba(0,0,0,.4));
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(90deg, #94a3b8 0%, #ffffff 40%, #64748b 80%, #334155 100%);
+  border-radius: 2px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+  z-index: 1;
 }
-.map-pin-shadow {
+.map-pin-needle::after {
+  content: '';
   position: absolute;
-  bottom: -6px;
+  bottom: -4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 20px;
-  height: 6px;
-  background: rgba(0,0,0,.38);
-  border-radius: 50%;
-  filter: blur(4px);
+  width: 0;
+  height: 0;
+  border-left: 2.5px solid transparent;
+  border-right: 2.5px solid transparent;
+  border-top: 6px solid #475569;
 }
+
+/* Pin Head Bulb (timbul jelas ke atas) */
+.map-pin-body {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 50% 50% 50% 8px;
+  transform: translateX(-50%) rotate(-45deg);
+  background: radial-gradient(circle at 32% 25%, #ffffff 0%, #fef08a 20%, #eab308 55%, #854d0e 100%);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.55),
+    inset 0 4px 8px rgba(255, 255, 255, 0.9),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.5),
+    inset 4px 0 12px rgba(0, 0, 0, 0.3);
+  transform-style: preserve-3d;
+  z-index: 2;
+}
+.map-pin-body::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  width: 14px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 80%);
+  filter: blur(1px);
+  transform: rotate(20deg);
+}
+
+.map-pin-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(6, 14, 22, 0.85);
+  background: radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.5) 0%, rgba(7, 16, 25, 0.95) 75%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
 .map-pin-label {
   position: absolute;
-  top: -6px;
-  right: -8px;
+  top: -5px;
+  right: -6px;
   display: grid;
-  width: 19px;
-  height: 19px;
+  width: 22px;
+  height: 22px;
   place-items: center;
-  border: 1px solid rgba(255,255,255,.35);
-  border-radius: 7px;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: 8px;
   color: #071019;
-  background: #f7f4e9;
-  font: 700 9px ui-monospace, monospace;
-  z-index: 2;
-  transform: rotate(45deg);
+  background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45), inset 0 1px rgba(255, 255, 255, 0.95);
+  font: 800 11px ui-monospace, monospace;
+  z-index: 3;
 }
+
+/* Destination variant (Mint Green) */
 .map-pin-wrapper--destination .map-pin-body {
-  background: linear-gradient(135deg, #b0f0d8 0%, #3a9e7c 60%, #1f6e52 100%);
+  background: radial-gradient(circle at 32% 25%, #ffffff 0%, #a7f3d0 20%, #10b981 55%, #064e3b 100%);
 }
-.map-pin-wrapper--destination .map-pin-tail {
-  border-top-color: #2a7a5d;
+.map-pin-wrapper--destination .map-pin-label {
+  background: linear-gradient(135deg, #ffffff 0%, #d1fae5 100%);
+}
+
+/* 3D Drop Animation */
+@keyframes pin-drop-3d {
+  0%   { transform: translateX(-50%) translateY(-90px) scale(0.6); opacity: 0; }
+  65%  { transform: translateX(-50%) translateY(4px) scale(1.08); opacity: 1; }
+  82%  { transform: translateX(-50%) translateY(-3px) scale(0.97); }
+  100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
+.map-pin-wrapper.is-dropping .map-pin-3d {
+  animation: pin-drop-3d 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 /* Legacy fallback for existing .map-pin */
 .map-pin { position: relative; display: grid; width: 34px; height: 42px; place-items: center; border: 1px solid rgba(255,255,255,.48); border-radius: 50% 50% 50% 12px; background: linear-gradient(145deg, #f2dc92, #b58f32); box-shadow: 0 12px 28px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.55); transform: rotate(-45deg); cursor: grab; }

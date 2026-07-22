@@ -76,26 +76,36 @@ function createMarkerElement(kind: LocationKind) {
   const wrapper = document.createElement("div");
   wrapper.className = `map-pin-wrapper map-pin-wrapper--${kind}`;
 
+  // Ground target ring (flat on map at coordinate point)
+  const groundRing = document.createElement("div");
+  groundRing.className = "map-pin-ground-ring";
+
+  // Ground shadow
+  const shadow = document.createElement("div");
+  shadow.className = "map-pin-shadow";
+
+  // Standing 3D Pin assembly
+  const pin3d = document.createElement("div");
+  pin3d.className = "map-pin-3d";
+
   const body = document.createElement("div");
   body.className = "map-pin-body";
 
   const core = document.createElement("div");
   core.className = "map-pin-core";
 
-  const tail = document.createElement("div");
-  tail.className = "map-pin-tail";
-
-  const shadow = document.createElement("div");
-  shadow.className = "map-pin-shadow";
+  const needle = document.createElement("div");
+  needle.className = "map-pin-needle";
 
   const label = document.createElement("div");
   label.className = "map-pin-label";
   label.textContent = kind === "origin" ? "A" : "B";
 
   body.appendChild(core);
-  wrapper.append(body, tail, shadow, label);
+  pin3d.append(needle, body, label);
+  wrapper.append(groundRing, shadow, pin3d);
 
-  // GSAP bounce-drop animation
+  // GSAP 3D drop animation
   requestAnimationFrame(() => {
     wrapper.classList.add("is-dropping");
     wrapper.addEventListener("animationend", () => wrapper.classList.remove("is-dropping"), { once: true });
@@ -481,9 +491,10 @@ export function useTransitMap() {
       }
 
       const marker = currentMarker || new maplibregl.Marker({
+        anchor: "bottom",
         draggable: selection.kind === "pin",
         element: createMarkerElement(kind),
-        pitchAlignment: "map",
+        pitchAlignment: "viewport",
       });
 
       marker.setLngLat([coordinate.lng, coordinate.lat]);
