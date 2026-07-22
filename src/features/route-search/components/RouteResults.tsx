@@ -133,6 +133,17 @@ function RouteCard({
                                 <span className="segment-stops__arrow" aria-hidden="true">→</span>
                                 <span>{segment.to}</span>
                               </p>
+                              {segment.scheduledWait && (
+                                <p className="segment-coords">
+                                  {segment.scheduledWait}
+                                  {segment.scheduleSourceUrl && (
+                                    <> · <a href={segment.scheduleSourceUrl} target="_blank" rel="noreferrer">sumber jadwal</a></>
+                                  )}
+                                </p>
+                              )}
+                              {segment.trafficNote && (
+                                <p className="segment-coords">{segment.trafficNote}</p>
+                              )}
                               {(segment.fromCoordinate || segment.toCoordinate) && (
                                 <p className="segment-coords">
                                   {segment.fromCoordinate ?? segment.toCoordinate}

@@ -15,8 +15,10 @@ const MODE_LABELS = {
   angkot: "Angkot",
   bikun: "Bikun",
   krl: "KRL",
+  jaklingko: "Mikrotrans",
   lrt: "LRT",
   mrt: "MRT",
+  ride_hail: "Ojek online",
   transjakarta: "TJ",
   walk: "Jalan",
 } as const;

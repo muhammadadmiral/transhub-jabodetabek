@@ -18,6 +18,9 @@ function coordinateLabel(lat: number | null, lng: number | null) {
 }
 
 const readableValue = (value: string) => value.replaceAll("_", " ");
+const readableMode = (value: string) => value === "jaklingko"
+  ? "Mikrotrans"
+  : value === "ride_hail" ? "Ojek online" : readableValue(value);
 
 function readableDate(value: string) {
   const date = new Date(`${value}T00:00:00`);
@@ -60,6 +63,9 @@ export type RouteCardViewModel = {
     routeId: string;
     routeCode: string;
     routeName: string;
+    scheduleSourceUrl: string | null;
+    scheduledWait: string | null;
+    trafficNote: string | null;
     serviceCategory: string;
     serviceName: string;
     to: string;
@@ -115,17 +121,26 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
         return {
           color: `#${segment.color.replace(/^#/, "")}`,
           confidence: readableValue(segment.dataConfidence),
-          duration: `${Math.round(segment.avgDurationMin)} menit`,
+          duration: `${Math.round(segment.avgDurationMin + segment.scheduledWaitMin)} menit`,
           fare: rupiah.format(segment.fare),
           from: fromLabel,
           fromCoordinate: coordinateLabel(segment.fromStopLat ?? null, segment.fromStopLng ?? null),
           id: segment.id,
           fareProductId: segment.fareProductId ?? null,
           lastVerifiedAt: readableDate(segment.lastVerifiedAt),
-          mode: readableValue(segment.mode),
+          mode: readableMode(segment.mode),
           routeId: segment.routeId,
           routeCode: segment.routeCode,
           routeName: segment.routeName,
+          scheduleSourceUrl: segment.scheduleSourceUrl ?? null,
+          scheduledWait: segment.scheduledWaitMin > 0
+            ? `Termasuk ±${segment.scheduledWaitMin.toFixed(1)} menit waktu tunggu terjadwal`
+            : null,
+          trafficNote: segment.trafficSource === "live_tomtom"
+            ? `ETA lalu lintas aktual · ${segment.trafficFactor?.toFixed(2)}× kondisi bebas`
+            : segment.trafficSource === "historical_profile"
+              ? `ETA memakai profil lalu lintas waktu setempat · ${segment.trafficFactor?.toFixed(2)}×`
+              : null,
           serviceCategory: readableValue(segment.serviceCategory),
           serviceName: segment.serviceName,
           to: toLabel,

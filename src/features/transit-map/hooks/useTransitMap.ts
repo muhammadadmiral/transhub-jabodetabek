@@ -442,7 +442,8 @@ export function useTransitMap() {
           <div class="journey-popup__inner" style="--accent:${accent}">
             <span class="journey-popup__badge">${props.criteriaLabel} · ${props.totalDurationMin} mnt · ${rupiah.format(Number(props.totalFare))}</span>
             <strong>${isWalk ? "Jalan kaki" : props.serviceName ?? props.mode}</strong>
-            <small>${String(props.mode).replaceAll("_", " ")} · ±${Math.round(Number(props.avgDurationMin))} menit</small>
+            <small>${props.mode === "jaklingko" ? "Mikrotrans" : String(props.mode).replaceAll("_", " ")} · ±${Math.round(Number(props.avgDurationMin) + Number(props.scheduledWaitMin ?? 0))} menit</small>
+            ${props.trafficSource ? `<small>${props.trafficSource === "live_tomtom" ? "lalu lintas aktual" : "profil lalu lintas"}</small>` : ""}
           </div>
         `)
         .addTo(map);
