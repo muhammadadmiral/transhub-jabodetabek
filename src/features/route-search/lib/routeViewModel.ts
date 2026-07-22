@@ -141,7 +141,7 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
             ? `Termasuk ±${segment.scheduledWaitMin.toFixed(1)} menit waktu tunggu terjadwal`
             : null,
           trafficNote: segment.trafficSource === "live_tomtom"
-            ? `ETA lalu lintas aktual · ${segment.trafficFactor?.toFixed(2)}× kondisi bebas`
+            ? `ETA lalu lintas aktual · TomTom · ${segment.trafficFactor?.toFixed(2)}× baseline historis`
             : segment.trafficSource === "live_google"
               ? `ETA lalu lintas aktual · Google Routes · ${segment.trafficFactor?.toFixed(2)}× baseline historis`
             : segment.trafficSource === "historical_profile"
