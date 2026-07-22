@@ -6,6 +6,7 @@ import { useMapStore } from "../../../store/mapStore";
 import { useSearchStore, type LocationKind, type LocationSelection } from "../../../store/searchStore";
 import { useJourney } from "../../route-search/JourneyContext";
 import { reverseGeocode } from "../../../lib/api/geocode";
+import { sliceLineString } from "../../../lib/geometry";
 
 function placeMapPin(kind: LocationKind, coordinate: { lat: number; lng: number }) {
   const store = useSearchStore.getState();
@@ -397,6 +398,7 @@ type JourneyOptionLike = {
   geojson: unknown;
   totalDurationMin: number;
   totalFare: number;
+  segments?: any[];
 };
 
 function buildJourneyCollection(options: JourneyOptionLike[], selectedCriteria: string | null): GeoJSON.FeatureCollection {
@@ -407,8 +409,28 @@ function buildJourneyCollection(options: JourneyOptionLike[], selectedCriteria: 
   ordered.forEach((option) => {
     const collection = option.geojson as GeoJSON.FeatureCollection;
     collection.features.forEach((feature, index) => {
+      let geometry = feature.geometry;
+      const segment = option.segments?.find((s: any) => s.id === feature.properties?.id) || option.segments?.[index];
+      
+      if (geometry && geometry.type === "LineString" && segment) {
+        const fromLng = segment.fromStopLng ?? feature.properties?.fromStopLng;
+        const fromLat = segment.fromStopLat ?? feature.properties?.fromStopLat;
+        const toLng = segment.toStopLng ?? feature.properties?.toStopLng;
+        const toLat = segment.toStopLat ?? feature.properties?.toStopLat;
+        
+        if (
+          typeof fromLng === "number" && typeof fromLat === "number" &&
+          typeof toLng === "number" && typeof toLat === "number"
+        ) {
+          const coords = geometry.coordinates as [number, number][];
+          const sliced = sliceLineString(coords, [fromLng, fromLat], [toLng, toLat]);
+          geometry = { ...geometry, coordinates: sliced };
+        }
+      }
+
       features.push({
         ...feature,
+        geometry,
         properties: {
           ...feature.properties,
           criteria: option.criteria,
