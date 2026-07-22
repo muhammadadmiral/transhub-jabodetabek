@@ -57,7 +57,7 @@ export const useSearchStore = create<SearchStore>((set) => ({
     [`${kind}Query`]: stop.name,
     [`${kind}Selection`]: { kind: "transit-stop", stop },
   }),
-  setPin: (kind, coordinate, label = "Titik di peta", source = "map") => set((state) => {
+  setPin: (kind, coordinate, label = "Lokasi pilihan", source = "map") => set((state) => {
     const current = state[`${kind}Selection`];
     return {
       [`${kind}Query`]: label,
