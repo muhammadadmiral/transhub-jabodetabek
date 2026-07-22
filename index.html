@@ -4,15 +4,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#07111f" />
-    <meta name="description" content="TransHub Jabodetabek — cari rute KRL, MRT, LRT, TransJakarta, dan angkot dalam satu peta 3D." />
+    <meta name="color-scheme" content="dark" />
+    <meta name="description" content="Cari rute KRL, MRT, LRT, TransJakarta, dan angkot di Jabodetabek dalam satu peta dengan TransHub." />
+    <meta name="robots" content="index, follow" />
+    <meta name="application-name" content="TransHub Jabodetabek" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:site_name" content="TransHub Jabodetabek" />
+    <meta property="og:title" content="TransHub Jabodetabek — Rute Transportasi Umum" />
+    <meta property="og:description" content="Cari rute KRL, MRT, LRT, TransJakarta, dan angkot di Jabodetabek dalam satu peta." />
+    <meta property="og:image" content="/social-card.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="TransHub Jabodetabek — KRL, MRT, LRT, TransJakarta, dan angkot" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TransHub Jabodetabek — Rute Transportasi Umum" />
+    <meta name="twitter:description" content="Cari rute transportasi umum Jabodetabek dalam satu peta." />
+    <meta name="twitter:image" content="/social-card.png" />
+    <meta name="twitter:image:alt" content="TransHub Jabodetabek — KRL, MRT, LRT, TransJakarta, dan angkot" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
     />
-    <title>TransHub Jabodetabek</title>
+    <title>TransHub Jabodetabek — Rute Transportasi Umum</title>
+    <script>
+      (() => {
+        const raw = "%VITE_SITE_URL%";
+        const configuredUrl = raw && raw !== "%VITE_SITE_URL%" ? raw : "";
+        const siteUrl = configuredUrl.startsWith("http") ? configuredUrl : window.location.origin;
+        const canonicalUrl = new URL("/", siteUrl).href;
+        const canonical = document.createElement("link");
+        canonical.rel = "canonical";
+        canonical.href = canonicalUrl;
+        document.head.append(canonical);
+        for (const [property, content] of [["og:url", canonicalUrl], ["og:image", new URL("/social-card.png", siteUrl).href]]) {
+          const meta = document.createElement("meta");
+          meta.setAttribute("property", property);
+          meta.content = content;
+          document.head.append(meta);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
