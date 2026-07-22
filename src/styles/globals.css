@@ -102,6 +102,10 @@ button { cursor: pointer; }
   cursor: pointer;
 }
 @keyframes pulse { 50% { opacity: .3; transform: scale(.6); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scale-in { from { opacity: 0; transform: scale(.93); } to { opacity: 1; transform: scale(1); } }
+@keyframes slide-in-left { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 
 .topbar {
   position: absolute;
@@ -251,10 +255,24 @@ button { cursor: pointer; }
 .route-results__heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: rgba(255,255,255,.76); font: 500 9px "DM Mono", monospace; letter-spacing: .13em; text-transform: uppercase; }
 .route-results__heading small { color: rgba(255,255,255,.36); font: inherit; letter-spacing: .05em; }
 .route-card-list { display: grid; gap: 9px; }
-.route-card { position: relative; padding: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; background: linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.018)); box-shadow: inset 0 1px rgba(255,255,255,.04), 0 12px 30px rgba(0,0,0,.08); cursor: pointer; transform-style: preserve-3d; }
-.route-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,.055) 46%, transparent 72%); opacity: 0; transform: translateX(-60%); transition: opacity .25s, transform .55s; }
+.route-card {
+  position: relative;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+  box-shadow: inset 0 1px rgba(255,255,255,.04), 0 12px 30px rgba(0,0,0,.08);
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .2s;
+  transform: perspective(600px) rotateX(calc(var(--rx, 0) * 1deg)) rotateY(calc(var(--ry, 0) * 1deg));
+  will-change: transform;
+}
+.route-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,.07) 46%, transparent 72%); opacity: 0; transform: translateX(-60%); transition: opacity .3s, transform .6s; }
 .route-card:hover::after { opacity: 1; transform: translateX(55%); }
-.route-card.is-selected { border-color: rgba(233,204,117,.34); box-shadow: inset 0 1px rgba(255,255,255,.06), 0 18px 42px rgba(0,0,0,.2), -4px 0 24px rgba(233,204,117,.05); }
+.route-card:hover { box-shadow: inset 0 1px rgba(255,255,255,.07), 0 18px 42px rgba(0,0,0,.16); }
+.route-card.is-selected { border-color: rgba(233,204,117,.38); box-shadow: inset 0 1px rgba(255,255,255,.06), 0 18px 42px rgba(0,0,0,.2), -4px 0 24px rgba(233,204,117,.08); }
 .route-card__meta, .route-card__figures { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .route-card__meta span { color: var(--gold); font: 500 8px "DM Mono", monospace; letter-spacing: .11em; text-transform: uppercase; }
 .route-card__meta small { color: rgba(255,255,255,.38); font-size: 10px; }
@@ -294,17 +312,129 @@ button { cursor: pointer; }
 .assumption-list { display: grid; gap: 5px; margin: 0; padding-left: 15px; color: rgba(255,255,255,.4); font-size: 9px; line-height: 1.5; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ─── 3D Premium Map Pin ─── */
+.map-pin-wrapper {
+  position: relative;
+  width: 36px;
+  height: 48px;
+  cursor: grab;
+  filter: drop-shadow(0 14px 22px rgba(0,0,0,.52)) drop-shadow(0 4px 6px rgba(0,0,0,.38));
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+.map-pin-wrapper:active { cursor: grabbing; }
+.map-pin-body {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50% 50% 50% 8px;
+  transform: translateX(-50%) rotate(-45deg);
+  background: linear-gradient(135deg, #f8e48a 0%, #d4a217 60%, #9a7210 100%);
+  border: 1.5px solid rgba(255,255,255,.55);
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,.65),
+    inset 0 -2px 6px rgba(0,0,0,.28),
+    inset 3px 0 8px rgba(0,0,0,.12);
+}
+.map-pin-body::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 12px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.45);
+  filter: blur(3px);
+  transform: rotate(15deg);
+}
+.map-pin-core {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(6,14,22,.72);
+  background: rgba(6,14,22,.18);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.map-pin-tail {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 13px solid #b88f14;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,.4));
+}
+.map-pin-shadow {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 6px;
+  background: rgba(0,0,0,.38);
+  border-radius: 50%;
+  filter: blur(4px);
+}
+.map-pin-label {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 7px;
+  color: #071019;
+  background: #f7f4e9;
+  font: 700 9px ui-monospace, monospace;
+  z-index: 2;
+  transform: rotate(45deg);
+}
+.map-pin-wrapper--destination .map-pin-body {
+  background: linear-gradient(135deg, #b0f0d8 0%, #3a9e7c 60%, #1f6e52 100%);
+}
+.map-pin-wrapper--destination .map-pin-tail {
+  border-top-color: #2a7a5d;
+}
+/* Legacy fallback for existing .map-pin */
 .map-pin { position: relative; display: grid; width: 34px; height: 42px; place-items: center; border: 1px solid rgba(255,255,255,.48); border-radius: 50% 50% 50% 12px; background: linear-gradient(145deg, #f2dc92, #b58f32); box-shadow: 0 12px 28px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.55); transform: rotate(-45deg); cursor: grab; }
 .map-pin:active { cursor: grabbing; }
 .map-pin > span { width: 12px; height: 12px; border: 3px solid rgba(5,12,18,.78); border-radius: 50%; }
 .map-pin > small { position: absolute; right: -8px; top: -7px; display: grid; width: 20px; height: 20px; place-items: center; border: 1px solid rgba(255,255,255,.3); border-radius: 7px; color: #071019; background: #f7f4e9; font: 700 10px ui-monospace, monospace; transform: rotate(45deg); }
 .map-pin--destination { background: linear-gradient(145deg, #a2ecd3, #3d9d7e); }
+/* ─── Pin animation keyframes ─── */
+@keyframes pin-drop {
+  0%   { transform: translateY(-60px) scale(.7); opacity: 0; }
+  65%  { transform: translateY(6px) scale(1.06); opacity: 1; }
+  82%  { transform: translateY(-4px) scale(.97); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes pin-shadow-pulse {
+  0%, 100% { transform: translateX(-50%) scaleX(1); opacity: .38; }
+  65%       { transform: translateX(-50%) scaleX(.6); opacity: .15; }
+}
+.map-pin-wrapper.is-dropping { animation: pin-drop .55s cubic-bezier(.34,1.4,.64,1) forwards; }
+.map-pin-wrapper.is-dropping .map-pin-shadow { animation: pin-shadow-pulse .55s cubic-bezier(.34,1.4,.64,1) forwards; }
+
 .pin-placement { position: absolute; z-index: 8; inset: 0; pointer-events: none; }
-.pin-crosshair { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; border: 1px solid rgba(233,204,117,.5); border-radius: 50%; box-shadow: 0 0 0 8px rgba(233,204,117,.07), 0 0 36px rgba(233,204,117,.16); transform: translate(-50%, -50%); }
+.pin-crosshair { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; border: 1px solid rgba(233,204,117,.5); border-radius: 50%; box-shadow: 0 0 0 8px rgba(233,204,117,.07), 0 0 36px rgba(233,204,117,.16); transform: translate(-50%, -50%); animation: crosshair-pulse 1.8s ease-in-out infinite; }
+@keyframes crosshair-pulse { 0%, 100% { box-shadow: 0 0 0 8px rgba(233,204,117,.07), 0 0 36px rgba(233,204,117,.16); } 50% { box-shadow: 0 0 0 14px rgba(233,204,117,.04), 0 0 52px rgba(233,204,117,.24); } }
 .pin-crosshair::before, .pin-crosshair::after { content: ""; position: absolute; top: 50%; left: 50%; background: var(--gold); transform: translate(-50%, -50%); }
 .pin-crosshair::before { width: 54px; height: 1px; }.pin-crosshair::after { width: 1px; height: 54px; }
 .pin-crosshair > span { position: absolute; top: 50%; left: 50%; width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 12px var(--gold); transform: translate(-50%, -50%); }
-.pin-crosshair--destination { border-color: rgba(139,217,191,.55); box-shadow: 0 0 0 8px rgba(139,217,191,.07), 0 0 36px rgba(139,217,191,.16); }
+.pin-crosshair--destination { border-color: rgba(139,217,191,.55); box-shadow: 0 0 0 8px rgba(139,217,191,.07), 0 0 36px rgba(139,217,191,.16); animation-name: crosshair-pulse-mint; }
+@keyframes crosshair-pulse-mint { 0%, 100% { box-shadow: 0 0 0 8px rgba(139,217,191,.07), 0 0 36px rgba(139,217,191,.16); } 50% { box-shadow: 0 0 0 14px rgba(139,217,191,.04), 0 0 52px rgba(139,217,191,.24); } }
 .pin-crosshair--destination::before, .pin-crosshair--destination::after, .pin-crosshair--destination > span { background: var(--mint); }
 .pin-placement__bar { position: absolute; left: 50%; bottom: 30px; display: flex; min-width: min(470px, calc(100vw - 30px)); align-items: center; justify-content: space-between; gap: 12px; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; color: rgba(255,255,255,.65); background: rgba(7,16,24,.9); box-shadow: 0 20px 55px rgba(0,0,0,.36); font-size: 11px; pointer-events: auto; transform: translateX(-50%); backdrop-filter: blur(18px); }
 .pin-placement__bar button { min-height: 36px; padding: 0 11px; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; background: rgba(255,255,255,.04); font-size: 10px; }
@@ -404,6 +534,25 @@ button { cursor: pointer; }
   .search-sheet.is-hidden { opacity: 0; pointer-events: none; transition: opacity .25s; }
   .pin-placement__bar { bottom: calc(18px + env(safe-area-inset-bottom)); min-width: calc(100vw - 28px); }
   .pin-placement__bar span { max-width: 130px; text-align: center; }
+  /* Route card 3D tilt disabled on touch */
+  .route-card { transform: none !important; }
+}
+
+@media (max-width: 480px) {
+  .topbar { padding-top: max(env(safe-area-inset-top), 8px); }
+  .brand__name { font-size: 16px; }
+  .glass-button { width: 40px; height: 40px; border-radius: 11px; }
+  .search-panel h1 { font-size: 17px; }
+  .map-legend { gap: 4px; padding: 4px; }
+  .map-legend__item { padding: 0 7px; font-size: 8px; letter-spacing: .06em; }
+  .route-card__figures > strong { font-size: 17px; }
+  .pin-placement__bar { padding: 6px; gap: 8px; font-size: 10px; }
+}
+
+@media (max-width: 360px) {
+  .brand__name { font-size: 15px; }
+  .topbar__actions { gap: 6px; }
+  .glass-button { width: 38px; height: 38px; }
 }
 
 @media (max-height: 690px) and (max-width: 760px) {

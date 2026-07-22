@@ -97,9 +97,9 @@ export function SearchPanel(props: SearchPanelProps) {
       className={`search-panel${hasResults ? " has-results" : ""}`}
       aria-labelledby="search-title"
       layout
-      initial={{ opacity: 0, rotateY: -8, scale: 0.96, x: -24, y: "-50%" }}
+      initial={{ opacity: 0, rotateY: -12, scale: 0.94, x: -28, y: "-50%" }}
       animate={{ opacity: 1, rotateY: 0, scale: 1, x: 0, y: "-50%" }}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], layout: { duration: 0.42 } }}
+      transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1], layout: { duration: 0.42 } }}
     >
       <span className="panel-depth panel-depth--one" aria-hidden="true" />
       <span className="panel-depth panel-depth--two" aria-hidden="true" />

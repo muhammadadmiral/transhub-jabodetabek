@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
 import { ChevronDown, Clock3, Database, ExternalLink, ShieldCheck, Users, WalletCards } from "lucide-react";
@@ -22,72 +22,93 @@ const CRITERIA_LINE: Record<string, { className: string; label: string }> = {
   fastest: { className: "route-card__line-chip--gold", label: "garis emas di peta" },
 };
 
-export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCriteria, onSelectCriteria, selectedCriteria }: RouteResultsProps) {
+function RouteCard({
+  card,
+  index,
+  isSelected,
+  prefersReducedMotion,
+  onSelectCriteria,
+  onHoverCriteria,
+}: {
+  card: RouteCardViewModel;
+  index: number;
+  isSelected: boolean;
+  prefersReducedMotion: boolean;
+  onSelectCriteria: (c: string) => void;
+  onHoverCriteria?: (c: string | null) => void;
+}) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const cardRef = useRef<HTMLElement>(null);
+  const isExpanded = expandedId === card.id;
 
-  if (isLoading) {
-    return <div className="route-feedback" aria-live="polite"><span className="route-loader" /><strong>Menyusun perjalanan</strong><small>Membandingkan waktu dan tarif.</small></div>;
+  function handleMouseMove(e: React.MouseEvent<HTMLElement>) {
+    if (prefersReducedMotion) return;
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    el.style.setProperty("--rx", String((-y * 5).toFixed(2)));
+    el.style.setProperty("--ry", String((x * 6).toFixed(2)));
   }
-  if (error) {
-    const notFound = error instanceof ApiError && error.status === 404;
-    return <div className="route-feedback route-feedback--error" role="alert"><strong>{notFound ? "Rute belum terhubung" : "Pencarian rute gagal"}</strong><small>{notFound ? "Pilih halte lain atau ubah tujuan." : "Coba kembali beberapa saat lagi."}</small></div>;
+
+  function handleMouseLeave() {
+    if (cardRef.current) {
+      cardRef.current.style.setProperty("--rx", "0");
+      cardRef.current.style.setProperty("--ry", "0");
+    }
+    onHoverCriteria?.(null);
   }
-  if (hasResponse && cards.length === 0) {
-    return <div className="route-feedback"><strong>Rute tidak tersedia</strong><small>Pilih halte lain.</small></div>;
-  }
-  if (cards.length === 0) return null;
 
   return (
-    <motion.div className="route-results" layout={!prefersReducedMotion} aria-live="polite">
-      <div className="route-results__heading"><span>Opsi perjalanan</span><small>{cards.length} opsi</small></div>
-      <div className="route-card-list">
-        {cards.map((card, index) => {
-          const isSelected = selectedCriteria === card.criteria || (!selectedCriteria && index === 0);
-          const isExpanded = expandedId === card.id;
-          return (
-            <motion.article
-              className={cn("route-card", isSelected && "is-selected")}
-              key={card.id}
-              layout={!prefersReducedMotion}
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={prefersReducedMotion ? { duration: 0 } : { delay: index * 0.065, duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => onSelectCriteria(card.criteria)}
-              onMouseEnter={() => onHoverCriteria?.(card.criteria)}
-              onMouseLeave={() => onHoverCriteria?.(null)}
-            >
-              <div className="route-card__meta">
-                <span>{card.criteriaLabel}</span>
-                <span className={cn("route-card__line-chip", CRITERIA_LINE[card.criteria]?.className)}>
-                  <span aria-hidden="true" />
-                  {CRITERIA_LINE[card.criteria]?.label}
-                </span>
-                <small>{card.transferLabel}</small>
-              </div>
-              <div className="route-card__figures">
-                <strong><NumberFlow value={card.durationMin} /> <small>menit</small></strong>
-                <strong>{card.fareLabel}</strong>
-              </div>
-              <div className="route-card__modes">{card.modesLabel}</div>
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  {card.hasCommunityData ? <span className="community-badge"><Users size={10} /> Data komunitas</span> : <span className="official-badge"><ShieldCheck size={10} /> Data resmi</span>}
-                  <span className="fare-status"><WalletCards size={10} /> {card.fareStatus}</span>
-                </div>
-                <button
-                  className="grid size-8 place-items-center rounded-lg border border-white/8 bg-white/[0.035] text-white/55 transition hover:text-white"
-                  type="button"
-                  aria-expanded={isExpanded}
-                  aria-label="Lihat rincian perjalanan"
-                  onClick={(event) => { event.stopPropagation(); setExpandedId(isExpanded ? null : card.id); }}
-                >
-                  <ChevronDown size={15} className={cn("transition-transform", isExpanded && "rotate-180")} />
-                </button>
-              </div>
+    <motion.article
+      ref={cardRef}
+      className={cn("route-card", isSelected && "is-selected")}
+      key={card.id}
+      layout={!prefersReducedMotion}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 18, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={prefersReducedMotion ? { duration: 0 } : {
+        delay: index * 0.07,
+        duration: 0.42,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      onClick={() => onSelectCriteria(card.criteria)}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => onHoverCriteria?.(card.criteria)}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="route-card__meta">
+        <span>{card.criteriaLabel}</span>
+        <span className={cn("route-card__line-chip", CRITERIA_LINE[card.criteria]?.className)}>
+          <span aria-hidden="true" />
+          {CRITERIA_LINE[card.criteria]?.label}
+        </span>
+        <small>{card.transferLabel}</small>
+      </div>
+      <div className="route-card__figures">
+        <strong><NumberFlow value={card.durationMin} /> <small>menit</small></strong>
+        <strong>{card.fareLabel}</strong>
+      </div>
+      <div className="route-card__modes">{card.modesLabel}</div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          {card.hasCommunityData ? <span className="community-badge"><Users size={10} /> Data komunitas</span> : <span className="official-badge"><ShieldCheck size={10} /> Data resmi</span>}
+          <span className="fare-status"><WalletCards size={10} /> {card.fareStatus}</span>
+        </div>
+        <button
+          className="grid size-8 place-items-center rounded-lg border border-white/8 bg-white/[0.035] text-white/55 transition hover:text-white"
+          type="button"
+          aria-expanded={isExpanded}
+          aria-label="Lihat rincian perjalanan"
+          onClick={(event) => { event.stopPropagation(); setExpandedId(isExpanded ? null : card.id); }}
+        >
+          <ChevronDown size={15} className={cn("transition-transform", isExpanded && "rotate-180")} />
+        </button>
+      </div>
 
-              <AnimatePresence initial={false}>
-                {isExpanded && (
+      <AnimatePresence initial={false}>
+        {isExpanded && (
                   <motion.div
                     className="route-detail"
                     initial={{ height: 0, opacity: 0 }}
@@ -158,7 +179,41 @@ export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCrit
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.article>
+    </motion.article>
+  );
+}
+
+export function RouteResults({ cards, error, hasResponse, isLoading, onHoverCriteria, onSelectCriteria, selectedCriteria }: RouteResultsProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  if (isLoading) {
+    return <div className="route-feedback" aria-live="polite"><span className="route-loader" /><strong>Menyusun perjalanan</strong><small>Membandingkan waktu dan tarif.</small></div>;
+  }
+  if (error) {
+    const notFound = error instanceof ApiError && error.status === 404;
+    return <div className="route-feedback route-feedback--error" role="alert"><strong>{notFound ? "Rute belum terhubung" : "Pencarian rute gagal"}</strong><small>{notFound ? "Pilih halte lain atau ubah tujuan." : "Coba kembali beberapa saat lagi."}</small></div>;
+  }
+  if (hasResponse && cards.length === 0) {
+    return <div className="route-feedback"><strong>Rute tidak tersedia</strong><small>Pilih halte lain.</small></div>;
+  }
+  if (cards.length === 0) return null;
+
+  return (
+    <motion.div className="route-results" layout={!prefersReducedMotion} aria-live="polite">
+      <div className="route-results__heading"><span>Opsi perjalanan</span><small>{cards.length} opsi</small></div>
+      <div className="route-card-list">
+        {cards.map((card, index) => {
+          const isSelected = selectedCriteria === card.criteria || (!selectedCriteria && index === 0);
+          return (
+            <RouteCard
+              key={card.id}
+              card={card}
+              index={index}
+              isSelected={isSelected}
+              prefersReducedMotion={prefersReducedMotion}
+              onSelectCriteria={onSelectCriteria}
+              onHoverCriteria={onHoverCriteria}
+            />
           );
         })}
       </div>

@@ -73,13 +73,35 @@ function getSelectionCoordinate(selection: LocationSelection) {
 }
 
 function createMarkerElement(kind: LocationKind) {
-  const element = document.createElement("div");
-  element.className = `map-pin map-pin--${kind}`;
-  const core = document.createElement("span");
-  const label = document.createElement("small");
+  const wrapper = document.createElement("div");
+  wrapper.className = `map-pin-wrapper map-pin-wrapper--${kind}`;
+
+  const body = document.createElement("div");
+  body.className = "map-pin-body";
+
+  const core = document.createElement("div");
+  core.className = "map-pin-core";
+
+  const tail = document.createElement("div");
+  tail.className = "map-pin-tail";
+
+  const shadow = document.createElement("div");
+  shadow.className = "map-pin-shadow";
+
+  const label = document.createElement("div");
+  label.className = "map-pin-label";
   label.textContent = kind === "origin" ? "A" : "B";
-  element.append(core, label);
-  return element;
+
+  body.appendChild(core);
+  wrapper.append(body, tail, shadow, label);
+
+  // GSAP bounce-drop animation
+  requestAnimationFrame(() => {
+    wrapper.classList.add("is-dropping");
+    wrapper.addEventListener("animationend", () => wrapper.classList.remove("is-dropping"), { once: true });
+  });
+
+  return wrapper;
 }
 
 function getRoutePadding() {
