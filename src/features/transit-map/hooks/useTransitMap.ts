@@ -165,6 +165,7 @@ function buildJourneyPopupHtml(props: JourneyProperties) {
   const accent = CRITERIA_COLORS[criteria] ?? "#e9cc75";
   const mode = String(props.mode ?? "transit");
   const isWalk = mode === "walk";
+  const isPaidCrossing = props.accessAction === "paid_station_crossing";
   const travelMinutes = Math.max(1, Math.round(Number(props.avgDurationMin ?? 0)));
   const waitMinutes = Math.round(Number(props.scheduledWaitMin ?? 0));
   const routeIdentity = [props.routeCode, props.routeName].filter(Boolean).join(" · ");
@@ -181,7 +182,9 @@ function buildJourneyPopupHtml(props: JourneyProperties) {
     ? props.trafficSource === "live_tomtom"
       ? `Traffic TomTom aktual${trafficFactor ? ` · ${trafficFactor.toFixed(2)}×` : ""}`
       : `Profil traffic waktu setempat${trafficFactor ? ` · ${trafficFactor.toFixed(2)}×` : ""}`
-    : isWalk ? "Estimasi rute pejalan kaki" : waitMinutes > 0 ? "Jadwal/frekuensi backend" : "Estimasi operasional backend";
+    : isPaidCrossing
+      ? "Akses area berbayar stasiun"
+      : isWalk ? "Estimasi rute pejalan kaki" : waitMinutes > 0 ? "Jadwal/frekuensi backend" : "Estimasi operasional backend";
   const updated = props.trafficUpdatedAt
     ? ` · ${new Date(String(props.trafficUpdatedAt)).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
     : "";
@@ -198,8 +201,9 @@ function buildJourneyPopupHtml(props: JourneyProperties) {
   return `
     <div class="journey-popup__inner" style="--accent:${accent}">
       <span class="journey-popup__badge">${escapeHtml(props.criteriaLabel)} · ${escapeHtml(props.totalDurationMin)} mnt · ${escapeHtml(RUPIAH.format(Number(props.totalFare)))}</span>
-      <strong>${escapeHtml(isWalk ? "Jalan kaki" : props.serviceName ?? modeLabel)}</strong>
+      <strong>${escapeHtml(isPaidCrossing ? "Menyeberang via Stasiun UI" : isWalk ? "Jalan kaki" : props.serviceName ?? modeLabel)}</strong>
       ${routeIdentity ? `<span class="journey-popup__route">${escapeHtml(routeIdentity)}</span>` : ""}
+      ${props.instruction ? `<small>${escapeHtml(props.instruction)}</small>` : ""}
       <small>${escapeHtml(modeLabel)} · ${escapeHtml(timing)} · ${escapeHtml(distance)}</small>
       <small class="journey-popup__source">${escapeHtml(traffic + updated + weather)}</small>
     </div>
@@ -275,7 +279,12 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       filter: ["!=", ["get", "mode"], "walk"],
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-color": ["coalesce", ["get", "color"], "#e9cc75"],
+        "line-gradient": [
+          "interpolate", ["linear"], ["line-progress"],
+          0, ["coalesce", ["get", "gradientStart"], ["get", "color"], "#e9cc75"],
+          0.52, ["coalesce", ["get", "gradientMid"], ["get", "color"], "#e9cc75"],
+          1, ["coalesce", ["get", "gradientEnd"], ["get", "color"], "#e9cc75"],
+        ],
         "line-opacity": [
           "case",
           ["boolean", ["get", "isSelected"], false], 1,
@@ -287,6 +296,38 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
           9, ["case", ["boolean", ["feature-state", "hover"], false], 5, 2.5],
           15, ["case", ["boolean", ["feature-state", "hover"], false], 10, 6],
         ],
+      },
+    });
+    map.addLayer({
+      id: "active-journey-motion",
+      source: "active-journey",
+      type: "line",
+      filter: ["!=", ["get", "mode"], "walk"],
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: {
+        "line-gradient": movingPulseGradient(0),
+        "line-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.96, 0.18],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 9, 2.5, 15, 6],
+      },
+    });
+    map.addLayer({
+      id: "active-journey-direction",
+      source: "active-journey",
+      type: "symbol",
+      filter: ["!=", ["get", "mode"], "walk"],
+      layout: {
+        "symbol-placement": "line",
+        "symbol-spacing": 110,
+        "text-field": "›",
+        "text-keep-upright": false,
+        "text-rotation-alignment": "map",
+        "text-size": ["interpolate", ["linear"], ["zoom"], 9, 13, 15, 21],
+      },
+      paint: {
+        "text-color": ["coalesce", ["get", "gradientEnd"], "#ffffff"],
+        "text-halo-color": "rgba(5,11,18,.9)",
+        "text-halo-width": 1.5,
+        "text-opacity": ["case", ["boolean", ["get", "isSelected"], false], 0.92, 0.2],
       },
     });
     map.addLayer({
@@ -303,6 +344,20 @@ function ensureRouteLayers(map: Map, data: GeoJSON.FeatureCollection) {
       },
     });
   }
+}
+
+function movingPulseGradient(progress: number) {
+  const center = Math.min(0.995, Math.max(0.005, progress));
+  const tail = Math.max(0, center - 0.14);
+  const head = Math.min(1, center + 0.08);
+  return [
+    "interpolate", ["linear"], ["line-progress"],
+    0, "rgba(255,255,255,0)",
+    tail, "rgba(255,255,255,0)",
+    center, "rgba(255,255,255,.98)",
+    head, "rgba(255,255,255,0)",
+    1, "rgba(255,255,255,0)",
+  ] as maplibregl.ExpressionSpecification;
 }
 
 type JourneyOptionLike = {
@@ -492,6 +547,23 @@ export function useTransitMap() {
       animation?.kill();
     };
   }, [isLoading, options, selectedCriteria]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!map || isLoading || options.length === 0 || prefersReducedMotion || !map.getLayer("active-journey-motion")) return;
+    let frame = 0;
+    let lastPaintAt = 0;
+    const animateDirection = (timestamp: number) => {
+      if (timestamp - lastPaintAt >= 45) {
+        lastPaintAt = timestamp;
+        map.setPaintProperty("active-journey-motion", "line-gradient", movingPulseGradient((timestamp % 2400) / 2400));
+      }
+      frame = window.requestAnimationFrame(animateDirection);
+    };
+    frame = window.requestAnimationFrame(animateDirection);
+    return () => window.cancelAnimationFrame(frame);
+  }, [isLoading, options.length]);
 
   // Hover kartu rute / legenda ikut menonjolkan garis di peta.
   useEffect(() => {

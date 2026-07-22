@@ -179,6 +179,11 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AccessAction
+         * @enum {string}
+         */
+        AccessAction: "paid_station_crossing";
+        /**
          * DataConfidence
          * @enum {string}
          */
@@ -354,7 +359,10 @@ export interface components {
             totalDurationMin: number;
             /** Totalfare */
             totalFare: number;
-            /** @default 0 */
+            /**
+             * Totaldistancemeters
+             * @default 0
+             */
             totalDistanceMeters: number;
             fareQuote: components["schemas"]["FareQuote"];
             /** Transfercount */
@@ -513,6 +521,11 @@ export interface components {
             trafficSource?: components["schemas"]["TrafficSource"] | null;
             /** Trafficupdatedat */
             trafficUpdatedAt?: string | null;
+            /** Trafficdelaymin */
+            trafficDelayMin?: number | null;
+            accessAction?: components["schemas"]["AccessAction"] | null;
+            /** Instruction */
+            instruction?: string | null;
             /** Weatherfactor */
             weatherFactor?: number | null;
             weatherSource?: components["schemas"]["WeatherSource"] | null;
@@ -554,7 +567,7 @@ export interface components {
          * TrafficSource
          * @enum {string}
          */
-        TrafficSource: "historical_profile" | "live_tomtom";
+        TrafficSource: "historical_profile" | "live_google" | "live_tomtom";
         /**
          * TransportMode
          * @enum {string}
@@ -577,8 +590,11 @@ export interface components {
          * WalkingRouteSource
          * @enum {string}
          */
-        WalkingRouteSource: "fallback" | "tomtom" | "valhalla";
-        /** @enum {string} */
+        WalkingRouteSource: "curated" | "fallback" | "tomtom" | "valhalla";
+        /**
+         * WeatherSource
+         * @enum {string}
+         */
         WeatherSource: "open_meteo";
     };
     responses: never;
