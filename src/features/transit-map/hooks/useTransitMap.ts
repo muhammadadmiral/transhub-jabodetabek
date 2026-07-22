@@ -9,7 +9,7 @@ import { reverseGeocode } from "../../../lib/api/geocode";
 
 function placeMapPin(kind: LocationKind, coordinate: { lat: number; lng: number }) {
   const store = useSearchStore.getState();
-  store.setPin(kind, coordinate, "Titik di peta", "map");
+  store.setPin(kind, coordinate, "Lokasi pilihan", "map");
   void reverseGeocode(coordinate.lat, coordinate.lng)
     .then((place) => useSearchStore.getState().updatePinLabel(kind, coordinate, place.label))
     .catch(() => undefined);
@@ -185,14 +185,23 @@ function buildJourneyPopupHtml(props: JourneyProperties) {
   const updated = props.trafficUpdatedAt
     ? ` · ${new Date(String(props.trafficUpdatedAt)).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`
     : "";
+  const distanceMeters = Number(props.distanceMeters ?? 0);
+  const distance = distanceMeters >= 1000
+    ? `${(distanceMeters / 1000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`
+    : `${Math.round(distanceMeters)} m`;
+  const weather = props.weatherSource === "open_meteo"
+    ? Number(props.precipitationMm ?? 0) >= 0.2
+      ? ` · hujan ${Number(props.precipitationMm).toFixed(1)} mm`
+      : " · cuaca kering"
+    : "";
 
   return `
     <div class="journey-popup__inner" style="--accent:${accent}">
       <span class="journey-popup__badge">${escapeHtml(props.criteriaLabel)} · ${escapeHtml(props.totalDurationMin)} mnt · ${escapeHtml(RUPIAH.format(Number(props.totalFare)))}</span>
       <strong>${escapeHtml(isWalk ? "Jalan kaki" : props.serviceName ?? modeLabel)}</strong>
       ${routeIdentity ? `<span class="journey-popup__route">${escapeHtml(routeIdentity)}</span>` : ""}
-      <small>${escapeHtml(modeLabel)} · ${escapeHtml(timing)}</small>
-      <small class="journey-popup__source">${escapeHtml(traffic + updated)}</small>
+      <small>${escapeHtml(modeLabel)} · ${escapeHtml(timing)} · ${escapeHtml(distance)}</small>
+      <small class="journey-popup__source">${escapeHtml(traffic + updated + weather)}</small>
     </div>
   `;
 }

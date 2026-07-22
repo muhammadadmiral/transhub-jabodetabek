@@ -72,10 +72,11 @@ export function useRouteSearchForm() {
   function createSearchInput(): RouteSearchInput | null {
     if (!canSubmit) return null;
     return {
-      accessRadiusMeters: 1500,
+      accessRadiusMeters: 750,
       allowRideHail: true,
       ...(destinationSelection.kind === "pin"
         ? {
+            destinationLabel: destinationSelection.label,
             destinationLat: destinationSelection.coordinate.lat,
             destinationLng: destinationSelection.coordinate.lng,
           }
@@ -83,12 +84,13 @@ export function useRouteSearchForm() {
       maxTransfers: 5,
       ...(originSelection.kind === "pin"
         ? {
+            originLabel: originSelection.label,
             originLat: originSelection.coordinate.lat,
             originLng: originSelection.coordinate.lng,
           }
         : { originStopId: originSelection.stop.id }),
       paymentProfile: "standard",
-      rideHailRadiusMeters: 8000,
+      rideHailRadiusMeters: 12000,
     };
   }
 

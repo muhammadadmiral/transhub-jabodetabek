@@ -84,7 +84,7 @@ function RouteCard({
           <span aria-hidden="true" />
           {CRITERIA_LINE[card.criteria]?.label}
         </span>
-        <small>{card.transferLabel}</small>
+        <small>{card.totalDistanceLabel} · {card.transferLabel}</small>
       </div>
       <div className="route-card__figures">
         <strong><NumberFlow value={card.durationMin} /> <small>menit</small></strong>
@@ -133,6 +133,7 @@ function RouteCard({
                                 <span className="segment-stops__arrow" aria-hidden="true">→</span>
                                 <span>{segment.to}</span>
                               </p>
+                              <p className="segment-coords">Jarak leg {segment.distance}</p>
                               {segment.scheduledWait && (
                                 <p className="segment-coords">
                                   {segment.scheduledWait}
@@ -144,10 +145,8 @@ function RouteCard({
                               {segment.trafficNote && (
                                 <p className="segment-coords">{segment.trafficNote}</p>
                               )}
-                              {(segment.fromCoordinate || segment.toCoordinate) && (
-                                <p className="segment-coords">
-                                  {segment.fromCoordinate ?? segment.toCoordinate}
-                                </p>
+                              {segment.weatherNote && (
+                                <p className="segment-coords">{segment.weatherNote}</p>
                               )}
                               <div className="segment-meta">
                                 <span>{segment.mode}</span><span>{segment.serviceCategory}</span><span>{segment.fare}</span>

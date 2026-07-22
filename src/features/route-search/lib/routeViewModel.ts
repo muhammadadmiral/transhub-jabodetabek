@@ -11,12 +11,6 @@ function readableStopId(id: string) {
   return id.split(":").at(-1)?.replaceAll("-", " ") || id;
 }
 
-function coordinateLabel(lat: number | null, lng: number | null) {
-  if (typeof lat !== "number" || typeof lng !== "number") return null;
-  const sign = lat >= 0 ? "" : "-";
-  return `Naik di ${sign}${Math.abs(lat).toFixed(3)}, ${lng.toFixed(3)}`;
-}
-
 const readableValue = (value: string) => value.replaceAll("_", " ");
 const readableMode = (value: string) => value === "jaklingko"
   ? "Mikrotrans"
@@ -27,6 +21,12 @@ function readableDate(value: string) {
   return Number.isNaN(date.getTime())
     ? value
     : new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date);
+}
+
+function formatDistance(meters: number | null | undefined) {
+  if (typeof meters !== "number") return "Jarak belum tersedia";
+  if (meters < 1000) return `${Math.round(meters)} m`;
+  return `${(meters / 1000).toLocaleString("id-ID", { maximumFractionDigits: 1 })} km`;
 }
 
 export type RouteCardViewModel = {
@@ -49,13 +49,14 @@ export type RouteCardViewModel = {
   id: string;
   modesLabel: string;
   quoteMeta: string;
+  totalDistanceLabel: string;
   segments: Array<{
     color: string;
     confidence: string;
     duration: string;
+    distance: string;
     fare: string;
     from: string;
-    fromCoordinate: string | null;
     id: string;
     lastVerifiedAt: string;
     mode: string;
@@ -66,10 +67,10 @@ export type RouteCardViewModel = {
     scheduleSourceUrl: string | null;
     scheduledWait: string | null;
     trafficNote: string | null;
+    weatherNote: string | null;
     serviceCategory: string;
     serviceName: string;
     to: string;
-    toCoordinate: string | null;
   }>;
   transferLabel: string;
 };
@@ -115,6 +116,7 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
       id: `${option.criteria}-${option.segments.map((segment) => segment.id).join("-")}`,
       modesLabel: serviceNames.join(" → "),
       quoteMeta: `${readableValue(option.fareQuote.paymentProfile)} · ${option.fareQuote.currency}`,
+      totalDistanceLabel: formatDistance(option.totalDistanceMeters),
       segments: option.segments.map((segment) => {
         const fromLabel = segment.fromStopName?.trim() || readableStopId(segment.fromStopId);
         const toLabel = segment.toStopName?.trim() || readableStopId(segment.toStopId);
@@ -122,9 +124,9 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
           color: `#${segment.color.replace(/^#/, "")}`,
           confidence: readableValue(segment.dataConfidence),
           duration: `${Math.round(segment.avgDurationMin + segment.scheduledWaitMin)} menit`,
+          distance: formatDistance(segment.distanceMeters),
           fare: rupiah.format(segment.fare),
           from: fromLabel,
-          fromCoordinate: coordinateLabel(segment.fromStopLat ?? null, segment.fromStopLng ?? null),
           id: segment.id,
           fareProductId: segment.fareProductId ?? null,
           lastVerifiedAt: readableDate(segment.lastVerifiedAt),
@@ -141,10 +143,14 @@ export function createRouteCards(data?: RouteSearchResponse): RouteCardViewModel
             : segment.trafficSource === "historical_profile"
               ? `ETA memakai profil lalu lintas waktu setempat · ${segment.trafficFactor?.toFixed(2)}×`
               : null,
+          weatherNote: segment.weatherSource === "open_meteo"
+            ? segment.precipitationMm && segment.precipitationMm >= 0.2
+              ? `ETA jalan disesuaikan hujan · ${segment.precipitationMm.toFixed(1)} mm · Open-Meteo`
+              : "Cuaca saat ini tidak menambah ETA · Open-Meteo"
+            : null,
           serviceCategory: readableValue(segment.serviceCategory),
           serviceName: segment.serviceName,
           to: toLabel,
-          toCoordinate: coordinateLabel(segment.toStopLat ?? null, segment.toStopLng ?? null),
         };
       }),
       transferLabel: `${option.transferCount}× pindah`,

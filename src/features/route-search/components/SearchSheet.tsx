@@ -4,22 +4,22 @@ import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { useMapStore } from "../../../store/mapStore";
 import { hasSearchActivity, SearchPanel, SearchPanelContent, type SearchPanelProps } from "./SearchPanel";
 
-const COMPACT_SNAP = 0.2;
-const ACTIVE_SNAP = 0.52;
+const COMPACT_SNAP = 0.28;
+const ACTIVE_SNAP = 0.64;
 const FULL_SNAP = 0.9;
 const SNAP_POINTS = [COMPACT_SNAP, ACTIVE_SNAP, FULL_SNAP];
 
 export function SearchSheet(props: SearchPanelProps) {
   const isMobile = useMediaQuery("(max-width: 760px)");
   const pinMode = useMapStore((state) => state.pinMode);
-  const [snapPoint, setSnapPoint] = useState<number | string | null>(COMPACT_SNAP);
+  const [snapPoint, setSnapPoint] = useState<number | string | null>(ACTIVE_SNAP);
   const hasActivity = hasSearchActivity(props);
   const isCompact = snapPoint === COMPACT_SNAP;
   const isFull = snapPoint === FULL_SNAP;
 
   useEffect(() => {
     // Keep the route and its endpoints visible while presenting useful results.
-    setSnapPoint(hasActivity ? ACTIVE_SNAP : COMPACT_SNAP);
+    setSnapPoint(ACTIVE_SNAP);
   }, [hasActivity]);
 
   if (!isMobile) return <SearchPanel {...props} />;
@@ -40,7 +40,7 @@ export function SearchSheet(props: SearchPanelProps) {
       snapPoints={SNAP_POINTS}
       activeSnapPoint={snapPoint}
       setActiveSnapPoint={setSnapPoint}
-      repositionInputs={false}
+      repositionInputs
     >
       <Drawer.Portal>
         <Drawer.Content
@@ -55,7 +55,7 @@ export function SearchSheet(props: SearchPanelProps) {
           <div
             className="search-sheet__scroll"
             onFocusCapture={(event) => {
-              if (event.target instanceof HTMLInputElement) setSnapPoint(ACTIVE_SNAP);
+              if (event.target instanceof HTMLInputElement) setSnapPoint(FULL_SNAP);
             }}
           >
             <SearchPanelContent {...props} />

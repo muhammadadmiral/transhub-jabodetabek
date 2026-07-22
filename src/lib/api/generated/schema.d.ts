@@ -354,6 +354,8 @@ export interface components {
             totalDurationMin: number;
             /** Totalfare */
             totalFare: number;
+            /** @default 0 */
+            totalDistanceMeters: number;
             fareQuote: components["schemas"]["FareQuote"];
             /** Transfercount */
             transferCount: number;
@@ -382,6 +384,10 @@ export interface components {
             originStopId?: string | null;
             /** Destinationstopid */
             destinationStopId?: string | null;
+            /** Originlabel */
+            originLabel?: string | null;
+            /** Destinationlabel */
+            destinationLabel?: string | null;
             /** Originlat */
             originLat?: number | null;
             /** Originlng */
@@ -392,7 +398,7 @@ export interface components {
             destinationLng?: number | null;
             /**
              * Accessradiusmeters
-             * @default 1500
+             * @default 750
              */
             accessRadiusMeters: number;
             /**
@@ -402,7 +408,7 @@ export interface components {
             allowRideHail: boolean;
             /**
              * Ridehailradiusmeters
-             * @default 8000
+             * @default 12000
              */
             rideHailRadiusMeters: number;
             /**
@@ -492,6 +498,8 @@ export interface components {
             toStopLng?: number | null;
             /** Walkingdistancemeters */
             walkingDistanceMeters?: number | null;
+            /** Distancemeters */
+            distanceMeters?: number | null;
             walkingRouteSource?: components["schemas"]["WalkingRouteSource"] | null;
             /**
              * Scheduledwaitmin
@@ -505,6 +513,13 @@ export interface components {
             trafficSource?: components["schemas"]["TrafficSource"] | null;
             /** Trafficupdatedat */
             trafficUpdatedAt?: string | null;
+            /** Weatherfactor */
+            weatherFactor?: number | null;
+            weatherSource?: components["schemas"]["WeatherSource"] | null;
+            /** Weatherupdatedat */
+            weatherUpdatedAt?: string | null;
+            /** Precipitationmm */
+            precipitationMm?: number | null;
         };
         /**
          * ServiceCategory
@@ -562,7 +577,9 @@ export interface components {
          * WalkingRouteSource
          * @enum {string}
          */
-        WalkingRouteSource: "fallback" | "valhalla";
+        WalkingRouteSource: "fallback" | "tomtom" | "valhalla";
+        /** @enum {string} */
+        WeatherSource: "open_meteo";
     };
     responses: never;
     parameters: never;
