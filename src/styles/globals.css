@@ -476,12 +476,22 @@ button { cursor: pointer; }
 .map-legend__note { padding: 0 10px; color: rgba(255,255,255,.4); font: 500 9px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
 
 /* ---- Popup jalur ---- */
-.journey-popup .maplibregl-popup-content { padding: 0; border-radius: 12px; background: transparent; box-shadow: none; }
+.journey-popup .maplibregl-popup-content { padding: 0; border-radius: 14px; background: transparent; box-shadow: none; transform: translateZ(0); }
 .journey-popup .maplibregl-popup-tip { border-top-color: rgba(9,19,29,.94); border-bottom-color: rgba(9,19,29,.94); }
-.journey-popup__inner { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.14); border-left: 3px solid var(--accent, #e9cc75); border-radius: 12px; background: rgba(9,19,29,.94); box-shadow: 0 16px 40px rgba(0,0,0,.4); backdrop-filter: blur(14px); font-family: "Manrope", sans-serif; }
+.journey-popup__inner { position: relative; display: flex; min-width: 225px; flex-direction: column; gap: 4px; padding: 12px 14px; overflow: hidden; border: 1px solid rgba(255,255,255,.15); border-left: 3px solid var(--accent, #e9cc75); border-radius: 14px; background: linear-gradient(145deg, rgba(18,35,49,.97), rgba(6,14,22,.97)); box-shadow: 0 22px 54px rgba(0,0,0,.55), 0 7px 0 -4px color-mix(in srgb, var(--accent, #e9cc75) 45%, transparent); backdrop-filter: blur(18px) saturate(1.15); font-family: "Manrope", sans-serif; }
+.journey-popup__inner::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, color-mix(in srgb, var(--accent, #e9cc75) 9%, transparent), transparent 48%); }
 .journey-popup__badge { align-self: flex-start; padding: 2px 6px; border-radius: 5px; color: var(--accent, #e9cc75); background: rgba(255,255,255,.06); font: 600 8px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }
-.journey-popup__inner strong { color: #f6f7f2; font-size: 12px; font-weight: 600; }
-.journey-popup__inner small { color: rgba(255,255,255,.5); font-size: 10px; text-transform: capitalize; }
+.journey-popup__inner strong { position: relative; z-index: 1; color: #f6f7f2; font-size: 13px; font-weight: 650; }
+.journey-popup__inner small { position: relative; z-index: 1; color: rgba(255,255,255,.58); font-size: 10px; line-height: 1.45; }
+.journey-popup__route { position: relative; z-index: 1; color: rgba(255,255,255,.82); font: 600 9px "DM Mono", monospace; }
+.journey-popup__source { color: color-mix(in srgb, var(--accent, #e9cc75) 72%, white 28%) !important; }
+.journey-popup--detail .maplibregl-popup-close-button { z-index: 2; top: 5px; right: 5px; width: 24px; height: 24px; border-radius: 50%; color: rgba(255,255,255,.65); background: rgba(255,255,255,.07); font-size: 17px; line-height: 22px; }
+.journey-popup--detail .journey-popup__inner { padding-right: 42px; box-shadow: 0 28px 68px rgba(0,0,0,.62), 0 9px 0 -4px color-mix(in srgb, var(--accent, #e9cc75) 55%, transparent); }
+
+@media (max-width: 760px) {
+  .journey-popup__inner { min-width: min(250px, calc(100vw - 56px)); }
+  .journey-popup--detail .journey-popup__inner { padding: 13px 40px 13px 14px; }
+}
 
 /* ---- Bottom sheet (mobile) ---- */
 .search-sheet {

@@ -272,7 +272,7 @@ export interface components {
          * GeocodeSource
          * @enum {string}
          */
-        GeocodeSource: "nominatim" | "photon";
+        GeocodeSource: "nominatim" | "photon" | "tomtom";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
