@@ -120,6 +120,7 @@ button { cursor: pointer; }
   padding: 0 clamp(22px, 3vw, 48px);
   pointer-events: none;
 }
+.brand-container { display: inline-flex; align-items: center; gap: 12px; pointer-events: auto; }
 .brand, .topbar__actions { pointer-events: auto; }
 .brand { display: inline-flex; align-items: center; color: var(--ivory); text-decoration: none; }
 .brand:focus-visible { border-radius: 8px; outline: 2px solid var(--gold); outline-offset: 5px; }
@@ -135,6 +136,48 @@ button { cursor: pointer; }
 .brand__name { font: 700 20px "Manrope", sans-serif; letter-spacing: -.055em; }
 .brand__name span { color: var(--gold); }
 .brand__city { margin: 2px 0 0 13px; padding-left: 13px; border-left: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.52); font: 500 9px "DM Mono", monospace; letter-spacing: .14em; text-transform: uppercase; }
+
+/* ── Tooltip 'Made with ❤️ by Admiral' ── */
+.brand-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(8, 18, 27, 0.65);
+  box-shadow: 0 4px 14px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.08);
+  backdrop-filter: blur(14px);
+  color: rgba(255,255,255,.68);
+  font: 500 10px "DM Mono", monospace;
+  letter-spacing: .03em;
+  user-select: none;
+  transition: border-color .2s, background .2s, color .2s;
+}
+.brand-tooltip:hover {
+  border-color: rgba(233, 204, 117, 0.35);
+  color: rgba(255,255,255,.92);
+  background: rgba(14, 27, 38, 0.82);
+}
+.brand-tooltip__heart {
+  color: #f43f5e;
+  display: inline-block;
+  vertical-align: middle;
+  transform-origin: center;
+  animation: heart-pulse 1.3s cubic-bezier(.215,.61,.355,1) infinite;
+}
+.brand-tooltip__author {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+@keyframes heart-pulse {
+  0%, 100% { transform: scale(1); }
+  14%      { transform: scale(1.32); }
+  28%      { transform: scale(1); }
+  42%      { transform: scale(1.22); }
+  70%      { transform: scale(1); }
+}
 .topbar__actions { display: flex; gap: 9px; }
 .glass-button {
   display: inline-flex;
